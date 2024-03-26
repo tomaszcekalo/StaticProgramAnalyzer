@@ -6,8 +6,4 @@
 	  <LangVersion>9.0</LangVersion>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="Parsing\Tokens\" />
-  </ItemGroup>
-
 </Project>

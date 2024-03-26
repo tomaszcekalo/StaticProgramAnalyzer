@@ -6,8 +6,21 @@ namespace StaticProgramAnalyzer.Tokens
 {
     public class AssignToken : StatementToken
     {
+        public AssignToken(IToken parent) : base(parent)
+        {
+        }
+
         public string VariableName { get; internal set; }
         public string FakeExpression { get; internal set; }
+
+        public override IEnumerable<IToken> GetChildren()
+        {
+            return new List<IToken>();
+        }
+        public override string ToString()
+        {
+            return VariableName;
+        }
 
         //public override string ToString()
         //{

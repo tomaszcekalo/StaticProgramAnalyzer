@@ -1,12 +1,22 @@
 ﻿using StaticProgramAnalyzer.Parsing;
+using StaticProgramAnalyzer.QueryProcessing;
+using StaticProgramAnalyzer.Tokens;
+using StaticProgramAnalyzer.TreeBuilding;
+using System.Reflection.Emit;
 
 namespace StaticProgramAnalyzer.Console
 {
     internal class Program
     {
-
         static void Main(string[] args)
         {
+            var parser = new Parser();
+            var lines = File.ReadAllLines(args[0]);
+            var tokens = parser.Parse(lines);
+            var treeBuilder = new TreeBuilder(parser);
+            var pkb = treeBuilder.GetProcedures(tokens);
+            var processor = new QueryProcessor(pkb);
+
             var logFilePath = "log.txt";
             //var processor = new SuperProcessor();
             //processor.LoadFromFile(args[0]);
@@ -24,12 +34,12 @@ namespace StaticProgramAnalyzer.Console
                 System.Console.WriteLine("Ready");
                 while (true)
                 {
-                    var declatarions = System.Console.ReadLine();
-                    logFileWriter.WriteLine($"{declatarions} ");
+                    var declarations = System.Console.ReadLine();
+                    logFileWriter.WriteLine($"{declarations} ");
                     var select = System.Console.ReadLine();
                     logFileWriter.WriteLine($"{select} ");
                     logFileWriter.Flush();
-                    System.Console.WriteLine($"{Guid.NewGuid()}");
+                    System.Console.WriteLine(processor.ProcessQuery(declarations, select));
                 }
             }
         }

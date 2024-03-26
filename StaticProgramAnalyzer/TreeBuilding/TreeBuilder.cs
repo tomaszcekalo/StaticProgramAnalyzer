@@ -4,7 +4,6 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Text;
 
 namespace StaticProgramAnalyzer.TreeBuilding
 {
@@ -17,10 +16,10 @@ namespace StaticProgramAnalyzer.TreeBuilding
 
         public Parser Parser { get; }
 
-        public List<ProcedureToken> GetProcedures(List<ParserToken> tokens)
+        public ProgramKnowledgeBase GetProcedures(List<ParserToken> tokens)
         {
             Queue<ParserToken> tokenQueue = new Queue<ParserToken>(tokens);
-            List<ProcedureToken> result = new List<ProcedureToken>();
+            List<ProcedureToken> procedures = new List<ProcedureToken>();
 
             while (tokenQueue.Count > 0)
             {
@@ -28,10 +27,14 @@ namespace StaticProgramAnalyzer.TreeBuilding
                 if (token.Content.ToLower() == "procedure")
                 {
                     var procedure = this.BuildProcedure(tokenQueue);
-                    result.Add(procedure);
+                    procedures.Add(procedure);
                 }
             }
-            return result;
+            return new ProgramKnowledgeBase()
+            {
+                ProceduresTree = procedures,
+                TokenList = procedures.SelectMany(p => p.GetChildren())
+            };
         }
 
         public ProcedureToken BuildProcedure(Queue<ParserToken> tokenQueue)
@@ -42,7 +45,7 @@ namespace StaticProgramAnalyzer.TreeBuilding
             procedure.Name = token.Content;
             token = tokenQueue.Dequeue();
             Contract.Assert(token.Content == "{");
-            procedure.StatementList = GetStatementList(tokenQueue);
+            procedure.StatementList = GetStatementList(procedure, tokenQueue);
 
             return procedure;
         }
@@ -58,7 +61,7 @@ namespace StaticProgramAnalyzer.TreeBuilding
             }
         }
 
-        public List<StatementToken> GetStatementList(Queue<ParserToken> tokenQueue)
+        public List<StatementToken> GetStatementList(IToken parent, Queue<ParserToken> tokenQueue)
         {
             List<StatementToken> result = new List<StatementToken>();
             while (tokenQueue.Count > 0)
@@ -70,19 +73,19 @@ namespace StaticProgramAnalyzer.TreeBuilding
                 }
                 else if (token.Content == "if")
                 {
-                    result.Add(this.BuildIfStatement(tokenQueue));
+                    result.Add(this.BuildIfStatement(parent, tokenQueue));
                 }
                 else if (token.Content == "while")
                 {
-                    result.Add(this.BuildWhileStatement(tokenQueue));
+                    result.Add(this.BuildWhileStatement(token, parent, tokenQueue));
                 }
                 else if (token.Content == "call")
                 {
-                    result.Add(this.BuildProcedureCall(tokenQueue));
+                    result.Add(this.BuildProcedureCall(parent, tokenQueue));
                 }
                 else if (tokenQueue.Peek().Content == "=")
                 {
-                    result.Add(this.BuildAssignmentStatement(token.Content, tokenQueue));
+                    result.Add(this.BuildAssignmentStatement(parent, token.Content, tokenQueue));
                 }
                 else
                 {
@@ -92,9 +95,9 @@ namespace StaticProgramAnalyzer.TreeBuilding
             return result;
         }
 
-        public StatementToken BuildAssignmentStatement(string variableName, Queue<ParserToken> tokenQueue)
+        public StatementToken BuildAssignmentStatement(IToken parent, string variableName, Queue<ParserToken> tokenQueue)
         {
-            AssignToken assignToken = new();
+            AssignToken assignToken = new(parent);
             CheckIfValidName(variableName);
             assignToken.VariableName = variableName;
             List<ParserToken> tokens = new();
@@ -109,9 +112,9 @@ namespace StaticProgramAnalyzer.TreeBuilding
             return assignToken;
         }
 
-        public StatementToken BuildProcedureCall(Queue<ParserToken> tokenQueue)
+        public StatementToken BuildProcedureCall(IToken parent, Queue<ParserToken> tokenQueue)
         {
-            CallToken callToken = new();
+            CallToken callToken = new(parent);
             var token = tokenQueue.Dequeue();
             CheckIfValidName(token.Content);
 
@@ -121,21 +124,21 @@ namespace StaticProgramAnalyzer.TreeBuilding
             return callToken;
         }
 
-        public StatementToken BuildWhileStatement(Queue<ParserToken> tokenQueue)
+        public StatementToken BuildWhileStatement(ParserToken source, IToken parent, Queue<ParserToken> tokenQueue)
         {
-            WhileToken whileToken = new();
+            WhileToken whileToken = new(parent, source);
             ParserToken token = tokenQueue.Dequeue();
             CheckIfValidName(token.Content);
             whileToken.VariableName = token.Content;
             token = tokenQueue.Dequeue();
             Contract.Assert(token.Content == "{");
-            whileToken.StatementList = this.GetStatementList(tokenQueue);
+            whileToken.StatementList = this.GetStatementList(whileToken, tokenQueue);
             return whileToken;
         }
 
-        public StatementToken BuildIfStatement(Queue<ParserToken> tokenQueue)
+        public StatementToken BuildIfStatement(IToken parent, Queue<ParserToken> tokenQueue)
         {
-            IfToken ifToken = new();
+            IfThenElseToken ifToken = new(parent);
             ParserToken token = tokenQueue.Dequeue();
             CheckIfValidName(token.Content);
             ifToken.VariableName = token.Content;
@@ -143,12 +146,12 @@ namespace StaticProgramAnalyzer.TreeBuilding
             Contract.Assert(token.Content == "then");
             token = tokenQueue.Dequeue();
             Contract.Assert(token.Content == "{");
-            ifToken.Then = this.GetStatementList(tokenQueue);
+            ifToken.Then = this.GetStatementList(ifToken, tokenQueue);
             token = tokenQueue.Dequeue();
             Contract.Assert(token.Content == "else");
             token = tokenQueue.Dequeue();
             Contract.Assert(token.Content == "{");
-            ifToken.Else = this.GetStatementList(tokenQueue);
+            ifToken.Else = this.GetStatementList(ifToken, tokenQueue);
             return ifToken;
         }
     }
