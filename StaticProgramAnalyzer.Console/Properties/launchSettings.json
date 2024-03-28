@@ -2,7 +2,8 @@
   "profiles": {
     "StaticProgramAnalyzer.Console": {
       "commandName": "Project",
-      "commandLineArgs": "\"C:\\Users\\tcekalo\\Documents\\STUDIA\\ATS\\zad dom 1.txt\""
+      "commandLineArgs": "\"J:\\studia\\AST\\simple\\zad dom 1.txt\""
+        
     }
   }
 }

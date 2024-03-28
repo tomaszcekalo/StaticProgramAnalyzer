@@ -4,7 +4,13 @@ using System.Text;
 
 namespace StaticProgramAnalyzer.Tokens
 {
-    internal class ExpressionToken
+    public class ExpressionToken
     {
+        String Content;
+
+        public ExpressionToken(string content)
+        {
+            Content = content;
+        }
     }
 }

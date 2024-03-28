@@ -4,7 +4,10 @@ using System.Text;
 
 namespace StaticProgramAnalyzer.Tokens
 {
-    internal class RefToken
+    public class RefToken : ExpressionToken
     {
+        public RefToken(string content) : base(content)
+        {
+        }
     }
 }

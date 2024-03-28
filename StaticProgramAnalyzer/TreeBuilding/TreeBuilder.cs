@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Runtime.ExceptionServices;
 
 namespace StaticProgramAnalyzer.TreeBuilding
 {
@@ -99,17 +100,88 @@ namespace StaticProgramAnalyzer.TreeBuilding
         {
             AssignToken assignToken = new(parent);
             CheckIfValidName(variableName);
-            assignToken.VariableName = variableName;
-            List<ParserToken> tokens = new();
+            assignToken.Left = new VariableToken(variableName);
+            Queue<ParserToken> tokens = new();
             ParserToken token = tokenQueue.Dequeue();
             while (tokenQueue.Count > 0 && token.Content != ";")
             {
                 token = tokenQueue.Dequeue();
-                tokens.Add(token);
+                tokens.Enqueue(token);
             }
-            // TODO: Build expression
+
+            assignToken.Right = BuildExpressionToken(tokens);
+
             assignToken.FakeExpression = string.Join(" ", tokens.Select(t => t.Content));
             return assignToken;
+        }
+
+        private ExpressionToken BuildExpressionToken(Queue<ParserToken> tokens)
+        {
+            ExpressionToken expressionToken = null;
+            RefToken factorToken = null;
+            while (tokens.Count > 0)
+            {
+                ParserToken token = tokens.Dequeue();
+                if (token.Content == "+")
+                {
+                    expressionToken = BuildPlusToken(factorToken, tokens);
+                    factorToken = null;
+                }
+                else if (token.Content == "-")
+                {
+                    //expressionToken = BuildMinusToken(factorToken, tokens);
+                    //factorToken = null;
+                }/*
+                else if(token.Content == "*")
+                {
+                    new TermToken();
+                    factorToken = null;
+                } */
+                else if (token.Content == ";")
+                {
+                    //empty
+                }
+                else
+                {
+                    if (IsConstant(token.Content))
+                    {
+                        factorToken = new ConstantToken(token.Content);
+                    }
+                    else
+                    {
+                        factorToken = new VariableToken(token.Content);
+                    }
+                }
+            }
+            if (factorToken != null)
+            {
+                return factorToken;
+            } else {
+                return expressionToken;
+            }
+        }
+
+        private bool IsConstant(string content)
+        {
+            Int16 dummy;
+            int minSize = content.Length > 1 ? 2 : 1;
+            return Int16.TryParse(content.Substring(0, minSize), out dummy);
+        }
+
+        private ExpressionToken BuildMinusToken(ExpressionToken factorToken, Queue<ParserToken> tokens)
+        {
+            MinusToken minusToken = new MinusToken("");
+            minusToken.Left = factorToken;
+            minusToken.Right = BuildExpressionToken(tokens);
+            return null;
+        }
+
+        private ExpressionToken BuildPlusToken(ExpressionToken factorToken, Queue<ParserToken> tokens)
+        {
+            PlusToken plusToken = new PlusToken("");
+            plusToken.Left = factorToken;
+            plusToken.Right = BuildExpressionToken(tokens);
+            return plusToken;
         }
 
         public StatementToken BuildProcedureCall(IToken parent, Queue<ParserToken> tokenQueue)

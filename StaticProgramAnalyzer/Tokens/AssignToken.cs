@@ -1,4 +1,5 @@
-﻿using System;
+﻿using StaticProgramAnalyzer.Parsing;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -9,6 +10,9 @@ namespace StaticProgramAnalyzer.Tokens
         public AssignToken(IToken parent) : base(parent)
         {
         }
+
+        public VariableToken Left;
+        public ExpressionToken Right;
 
         public string VariableName { get; internal set; }
         public string FakeExpression { get; internal set; }
