@@ -13,6 +13,7 @@ namespace StaticProgramAnalyzer.Parsing
         char semicolon = ';';
         char[] _specialCharacters = new char[] { '{', '}', ';', '=', '+', '*', '/', '-', ';' };
         char[] _mathOperator = new char[] { '=', '+', '*', '/', '-' };
+        char[] _bracketCharacters = new char[] { '(', ')' };
 
         public List<ParserToken> Parse(string[] lines)
         {
@@ -22,13 +23,14 @@ namespace StaticProgramAnalyzer.Parsing
             foreach (var line in lines)
             {
                 ln++;
+                bool isAssigment = false;
                 StringBuilder sb = new StringBuilder();
                 for (int i = 0; i < line.Length; i++)
                 {
                     if (IsLetter(line[i]) || IsDigit(line[i]))
                     {
                         sb.Append(line[i]);
-                        if(pos==0)
+                        if (pos == 0)
                         {
                             pos = i;
                         }
@@ -37,6 +39,7 @@ namespace StaticProgramAnalyzer.Parsing
                     {
                         var isWhitespace = IsWhitespace(line[i]);
                         var isSpecialCharacter = IsSpecialCharacter(line[i]);
+                        var isBracketCharacter = IsBracketCharacter(line[i]);
                         if (sb.Length > 0)
                         {
                             result.Add(new ParserToken()
@@ -48,7 +51,20 @@ namespace StaticProgramAnalyzer.Parsing
                             sb = new StringBuilder();
                             pos = 0;
                         }
-                        if (isSpecialCharacter )
+                        if (isSpecialCharacter)
+                        {
+                            if (line[i] == '=')
+                            {
+                                isAssigment = true;
+                            }
+                            result.Add(new ParserToken()
+                            {
+                                Content = line[i].ToString(),
+                                LineNumber = ln,
+                                Position = i
+                            });
+                        }
+                        else if (isAssigment && isBracketCharacter) 
                         {
                             result.Add(new ParserToken()
                             {
@@ -69,6 +85,7 @@ namespace StaticProgramAnalyzer.Parsing
         public bool IsWhitespace(char symbol) => _whiteSpace.Contains(symbol);
         public bool IsDigit(char symbol) => symbol >= '0' && symbol <= '9';
         public bool IsSpecialCharacter(char symbol) => _specialCharacters.Contains(symbol);
+        public bool IsBracketCharacter(char symbol) => _bracketCharacters.Contains(symbol);
         public bool IsLetter(char symbol)
         {
             if (symbol >= 'a' && symbol <= 'z')

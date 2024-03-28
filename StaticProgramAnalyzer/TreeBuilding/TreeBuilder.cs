@@ -117,26 +117,45 @@ namespace StaticProgramAnalyzer.TreeBuilding
 
         private ExpressionToken BuildExpressionToken(Queue<ParserToken> tokens)
         {
+            ExpressionToken leftToken = null;
+            ExpressionToken rightToken = null;
             ExpressionToken expressionToken = null;
-            RefToken factorToken = null;
+            bool wasPlus = false;
+            bool wasMinus = false;
+            bool wasTimes = false;
             while (tokens.Count > 0)
             {
                 ParserToken token = tokens.Dequeue();
+                if(rightToken != null)
+                {
+                    if (wasPlus){
+                        leftToken = BuildPlusToken(leftToken, rightToken);
+                    } else if (wasMinus) {
+                        leftToken = BuildMinusToken(leftToken, rightToken);
+                    } else if (wasTimes) {
+                        //leftToken = BuildMinusToken(leftToken, rightToken);
+                    }
+
+                    if(wasPlus || wasMinus || wasTimes)
+                    {
+                        rightToken = null;
+                        wasPlus = false;
+                        wasMinus = false;
+                        wasTimes = false;
+                    }
+                }
                 if (token.Content == "+")
                 {
-                    expressionToken = BuildPlusToken(factorToken, tokens);
-                    factorToken = null;
+                    wasPlus = true;
                 }
                 else if (token.Content == "-")
                 {
-                    //expressionToken = BuildMinusToken(factorToken, tokens);
-                    //factorToken = null;
-                }/*
+                    wasMinus = true;
+                }
                 else if(token.Content == "*")
                 {
-                    new TermToken();
-                    factorToken = null;
-                } */
+                    //expressionToken = BuildTimesToken(factorToken, tokens);
+                }
                 else if (token.Content == ";")
                 {
                     //empty
@@ -145,20 +164,52 @@ namespace StaticProgramAnalyzer.TreeBuilding
                 {
                     if (IsConstant(token.Content))
                     {
-                        factorToken = new ConstantToken(token.Content);
+                        if (leftToken == null) {
+                            leftToken = new ConstantToken(token.Content);
+                        } else {
+                            rightToken = new ConstantToken(token.Content);
+                        }
                     }
                     else
                     {
-                        factorToken = new VariableToken(token.Content);
+                        if (leftToken == null) {
+                            leftToken = new VariableToken(token.Content);
+                        } else {
+                            rightToken = new VariableToken(token.Content);
+                        }
                     }
                 }
             }
-            if (factorToken != null)
+
+            if(rightToken != null)
             {
-                return factorToken;
-            } else {
-                return expressionToken;
+                return rightToken;
+            } else
+            {
+                return leftToken;
             }
+        }
+
+        private ExpressionToken BuildPlusToken(ExpressionToken leftToken, ExpressionToken rightToken)
+        {
+            var expr = new PlusToken("+");
+            expr.Left = leftToken;
+            expr.Right = rightToken;
+            return expr;
+        }
+        private ExpressionToken BuildMinusToken(ExpressionToken leftToken, ExpressionToken rightToken)
+        {
+            var expr = new MinusToken("-");
+            expr.Left = leftToken;
+            expr.Right = rightToken;
+            return expr;
+        }
+        private ExpressionToken BuildTimesToken(RefToken factorToken, Queue<ParserToken> tokens)
+        {
+            TimesToken timesToken = new TimesToken("");
+            timesToken.Left = factorToken;
+            timesToken.Right = BuildExpressionToken(tokens);
+            return null;
         }
 
         private bool IsConstant(string content)
@@ -179,8 +230,9 @@ namespace StaticProgramAnalyzer.TreeBuilding
         private ExpressionToken BuildPlusToken(ExpressionToken factorToken, Queue<ParserToken> tokens)
         {
             PlusToken plusToken = new PlusToken("");
-            plusToken.Left = factorToken;
-            plusToken.Right = BuildExpressionToken(tokens);
+            ExpressionToken expToken = BuildExpressionToken(tokens);
+            plusToken.Left = null;
+            plusToken.Right = null;
             return plusToken;
         }
 
