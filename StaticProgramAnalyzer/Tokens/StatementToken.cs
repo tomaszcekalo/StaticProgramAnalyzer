@@ -1,4 +1,5 @@
-﻿using System;
+﻿using StaticProgramAnalyzer.Parsing;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -14,5 +15,6 @@ namespace StaticProgramAnalyzer.Tokens
         public IToken Parent { get; }
 
         public abstract IEnumerable<IToken> GetChildren();
+        public ParserToken Source { get; set; }
     }
 }

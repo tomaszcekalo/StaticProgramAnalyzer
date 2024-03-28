@@ -14,7 +14,7 @@ namespace StaticProgramAnalyzer.Console
             var lines = File.ReadAllLines(args[0]);
             var tokens = parser.Parse(lines);
             var treeBuilder = new TreeBuilder(parser);
-            var pkb = treeBuilder.GetProcedures(tokens);
+            var pkb = treeBuilder.GetPKB(tokens);
             var processor = new QueryProcessor(pkb);
 
             var logFilePath = "log.txt";

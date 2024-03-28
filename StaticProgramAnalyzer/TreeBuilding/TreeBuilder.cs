@@ -16,7 +16,7 @@ namespace StaticProgramAnalyzer.TreeBuilding
 
         public Parser Parser { get; }
 
-        public ProgramKnowledgeBase GetProcedures(List<ParserToken> tokens)
+        public ProgramKnowledgeBase GetPKB(List<ParserToken> tokens)
         {
             Queue<ParserToken> tokenQueue = new Queue<ParserToken>(tokens);
             List<ProcedureToken> procedures = new List<ProcedureToken>();
@@ -33,14 +33,27 @@ namespace StaticProgramAnalyzer.TreeBuilding
             return new ProgramKnowledgeBase()
             {
                 ProceduresTree = procedures,
-                TokenList = procedures.SelectMany(p => p.GetChildren())
+                TokenList = procedures.Concat(procedures.SelectMany(p => p.GetChildren())),
+                CallsDictionary = procedures.Select(p => new
+                {
+                    procedureName = p.Name,
+                    calls = p.GetChildren().OfType<CallToken>().Select(c => c.ProcedureName)
+                })
+                .SelectMany(p => p.calls.Select(c => new
+                {
+                    caller = p.procedureName,
+                    callee = c
+                })).ToDictionary(x => x.caller, x => x.callee)
             };
         }
 
         public ProcedureToken BuildProcedure(Queue<ParserToken> tokenQueue)
         {
-            ProcedureToken procedure = new ProcedureToken();
             ParserToken token = tokenQueue.Dequeue();
+            ProcedureToken procedure = new ProcedureToken()
+            {
+                Source = token
+            };
             CheckIfValidName(token.Content);
             procedure.Name = token.Content;
             token = tokenQueue.Dequeue();
@@ -85,7 +98,7 @@ namespace StaticProgramAnalyzer.TreeBuilding
                 }
                 else if (tokenQueue.Peek().Content == "=")
                 {
-                    result.Add(this.BuildAssignmentStatement(parent, token.Content, tokenQueue));
+                    result.Add(this.BuildAssignmentStatement(parent, token, tokenQueue));
                 }
                 else
                 {
@@ -95,11 +108,9 @@ namespace StaticProgramAnalyzer.TreeBuilding
             return result;
         }
 
-        public StatementToken BuildAssignmentStatement(IToken parent, string variableName, Queue<ParserToken> tokenQueue)
+        public StatementToken BuildAssignmentStatement(IToken parent, ParserToken leftHandToken, Queue<ParserToken> tokenQueue)
         {
-            AssignToken assignToken = new(parent);
-            CheckIfValidName(variableName);
-            assignToken.VariableName = variableName;
+            CheckIfValidName(leftHandToken.Content);
             List<ParserToken> tokens = new();
             ParserToken token = tokenQueue.Dequeue();
             while (tokenQueue.Count > 0 && token.Content != ";")
@@ -108,7 +119,10 @@ namespace StaticProgramAnalyzer.TreeBuilding
                 tokens.Add(token);
             }
             // TODO: Build expression
-            assignToken.FakeExpression = string.Join(" ", tokens.Select(t => t.Content));
+            var fakeExpression = string.Join(" ", tokens.Select(t => t.Content));
+            AssignToken assignToken = new(parent, leftHandToken, fakeExpression)
+            {
+            };
             return assignToken;
         }
 

@@ -16,7 +16,6 @@ namespace StaticProgramAnalyzer.Tokens
 
         public string VariableName { get; internal set; }
         public List<StatementToken> StatementList { get; internal set; }
-        public ParserToken Source { get; }
 
         public override IEnumerable<IToken> GetChildren()
         {
