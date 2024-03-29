@@ -2,8 +2,10 @@
 using StaticProgramAnalyzer.Tokens;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Net.Http.Headers;
 using System.Runtime.ExceptionServices;
 
 namespace StaticProgramAnalyzer.TreeBuilding
@@ -95,98 +97,131 @@ namespace StaticProgramAnalyzer.TreeBuilding
             }
             return result;
         }
-
+        class AssigmentPair
+        {
+            private static Dictionary<String, int> operatorPriorityDict = new Dictionary<string, int>(){
+                {"+", 0 },
+                {"-", 0 },
+                {"*", 1 },
+                {"/", 1 },
+                {"(", 2 },
+                {")", -1 },
+                {";", -2 }
+            };
+            public ParserToken refToken;
+            public ParserToken operatorToken;
+            public int operatorPriority;
+            public AssigmentPair(ParserToken refToken, ParserToken operatorToken)
+            {
+                this.refToken = refToken;
+                this.operatorToken = operatorToken;
+                operatorPriority = AssigmentPair.operatorPriorityDict[operatorToken.Content];
+            }
+        }
         public StatementToken BuildAssignmentStatement(IToken parent, string variableName, Queue<ParserToken> tokenQueue)
         {
             AssignToken assignToken = new(parent);
             CheckIfValidName(variableName);
             assignToken.Left = new VariableToken(variableName);
-            Queue<ParserToken> tokens = new();
+            Queue<AssigmentPair> tokens = new();
             ParserToken token = tokenQueue.Dequeue();
             while (tokenQueue.Count > 0 && token.Content != ";")
             {
-                token = tokenQueue.Dequeue();
-                tokens.Enqueue(token);
+                tokens.Enqueue(new AssigmentPair(tokenQueue.Dequeue(), token=tokenQueue.Dequeue()));
             }
 
-            assignToken.Right = BuildExpressionToken(tokens);
+            assignToken.Right = BuildExpressionToken(tokens, 0);
 
-            assignToken.FakeExpression = string.Join(" ", tokens.Select(t => t.Content));
+            assignToken.FakeExpression = string.Join(" ", tokens.Select(t => t.refToken.Content + " " + t.operatorToken.Content));
             return assignToken;
         }
 
-        private ExpressionToken BuildExpressionToken(Queue<ParserToken> tokens)
+        private ExpressionToken BuildExpressionToken(Queue<AssigmentPair> tokens, int priority, AssigmentPair deq = null)
         {
-            ExpressionToken leftToken = null;
-            ExpressionToken rightToken = null;
-            ExpressionToken expressionToken = null;
-            bool wasPlus = false;
-            bool wasMinus = false;
-            bool wasTimes = false;
+            AssigmentPair leftToken = null;
+            AssigmentPair rightToken = null;
+            ExpressionToken leftExpr = null;
+            ExpressionToken rightExpr = null;
             while (tokens.Count > 0)
             {
-                ParserToken token = tokens.Dequeue();
-                if(rightToken != null)
+                if (leftToken == null)
                 {
-                    if (wasPlus){
-                        leftToken = BuildPlusToken(leftToken, rightToken);
-                    } else if (wasMinus) {
-                        leftToken = BuildMinusToken(leftToken, rightToken);
-                    } else if (wasTimes) {
-                        //leftToken = BuildMinusToken(leftToken, rightToken);
-                    }
-
-                    if(wasPlus || wasMinus || wasTimes)
+                    leftToken = tokens.Dequeue();
+                    leftExpr = BuildVariableToken(leftToken.refToken);
+                }
+                rightToken = tokens.Count > 0 ? tokens.Peek() : null;
+                if(rightToken == null)
+                {
+                    return BuildVariableToken(leftToken.refToken);
+                } else
+                {
+                    rightExpr = BuildVariableToken(rightToken.refToken);
+                }
+                if (leftToken.operatorPriority > rightToken.operatorPriority)
+                {
+                    var tdeq = tokens.Dequeue();
+                    switch (leftToken.operatorToken.Content)
                     {
-                        rightToken = null;
-                        wasPlus = false;
-                        wasMinus = false;
-                        wasTimes = false;
+                        case "+":
+                            return BuildPlusToken(leftExpr, rightExpr);
+                            break;
+                        case "-":
+                            return BuildMinusToken(leftExpr, rightExpr);
+                            break;
+                        case "*":
+                            return BuildTimesToken(leftExpr, rightExpr);
+                            break;
+                        default:
+                            throw new Exception("Not supported operator");
                     }
                 }
-                if (token.Content == "+")
+                else if (leftToken.operatorPriority < rightToken.operatorPriority)
                 {
-                    wasPlus = true;
-                }
-                else if (token.Content == "-")
-                {
-                    wasMinus = true;
-                }
-                else if(token.Content == "*")
-                {
-                    //expressionToken = BuildTimesToken(factorToken, tokens);
-                }
-                else if (token.Content == ";")
-                {
-                    //empty
+                    ExpressionToken ep = BuildExpressionToken(tokens, 0);
+                    int a = 1;
+                    int b = 2;
+                    switch (leftToken.operatorToken.Content)
+                    {
+                        case "+":
+                            leftExpr = BuildPlusToken(leftExpr, ep);
+                            break;
+                        case "-":
+                            leftExpr = BuildMinusToken(leftExpr, ep);
+                            break;
+                        case "*":
+                            leftExpr = BuildTimesToken(leftExpr, ep);
+                            break;
+                        default:
+                            throw new Exception("Not supported operator");
+                    }
                 }
                 else
                 {
-                    if (IsConstant(token.Content))
+                    var tdeq = tokens.Dequeue();
+                    switch (leftToken.operatorToken.Content)
                     {
-                        if (leftToken == null) {
-                            leftToken = new ConstantToken(token.Content);
-                        } else {
-                            rightToken = new ConstantToken(token.Content);
-                        }
-                    }
-                    else
-                    {
-                        if (leftToken == null) {
-                            leftToken = new VariableToken(token.Content);
-                        } else {
-                            rightToken = new VariableToken(token.Content);
-                        }
+                        case "+":
+                            leftExpr = BuildPlusToken(leftExpr, rightExpr);
+                            break;
+                        case "-":
+                            leftExpr = BuildMinusToken(leftExpr, rightExpr);
+                            break;
+                        case "*":
+                            leftExpr = BuildTimesToken(leftExpr, rightExpr);
+                            break;
+                        default:
+                            throw new Exception("Not supported operator");
                     }
                 }
             }
-
-            if(rightToken != null)
-            {
-                return rightToken;
-            } else
-            {
-                return leftToken;
+            return leftExpr;
+        }
+        private RefToken BuildVariableToken(ParserToken token)
+        {
+            if (IsConstant(token.Content)) {
+                return new ConstantToken(token.Content);
+            } else {
+                return new VariableToken(token.Content);
             }
         }
 
@@ -204,12 +239,12 @@ namespace StaticProgramAnalyzer.TreeBuilding
             expr.Right = rightToken;
             return expr;
         }
-        private ExpressionToken BuildTimesToken(RefToken factorToken, Queue<ParserToken> tokens)
+        private ExpressionToken BuildTimesToken(ExpressionToken leftToken, ExpressionToken rightToken)
         {
-            TimesToken timesToken = new TimesToken("");
-            timesToken.Left = factorToken;
-            timesToken.Right = BuildExpressionToken(tokens);
-            return null;
+            var expr = new MinusToken("*");
+            expr.Left = leftToken;
+            expr.Right = rightToken;
+            return expr;
         }
 
         private bool IsConstant(string content)
@@ -217,23 +252,6 @@ namespace StaticProgramAnalyzer.TreeBuilding
             Int16 dummy;
             int minSize = content.Length > 1 ? 2 : 1;
             return Int16.TryParse(content.Substring(0, minSize), out dummy);
-        }
-
-        private ExpressionToken BuildMinusToken(ExpressionToken factorToken, Queue<ParserToken> tokens)
-        {
-            MinusToken minusToken = new MinusToken("");
-            minusToken.Left = factorToken;
-            minusToken.Right = BuildExpressionToken(tokens);
-            return null;
-        }
-
-        private ExpressionToken BuildPlusToken(ExpressionToken factorToken, Queue<ParserToken> tokens)
-        {
-            PlusToken plusToken = new PlusToken("");
-            ExpressionToken expToken = BuildExpressionToken(tokens);
-            plusToken.Left = null;
-            plusToken.Right = null;
-            return plusToken;
         }
 
         public StatementToken BuildProcedureCall(IToken parent, Queue<ParserToken> tokenQueue)
