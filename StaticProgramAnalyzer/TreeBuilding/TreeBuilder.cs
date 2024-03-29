@@ -159,63 +159,41 @@ namespace StaticProgramAnalyzer.TreeBuilding
                 }
                 if (leftToken.operatorPriority > rightToken.operatorPriority)
                 {
-                    var tdeq = tokens.Dequeue();
-                    switch (leftToken.operatorToken.Content)
-                    {
-                        case "+":
-                            return BuildPlusToken(leftExpr, rightExpr);
-                            break;
-                        case "-":
-                            return BuildMinusToken(leftExpr, rightExpr);
-                            break;
-                        case "*":
-                            return BuildTimesToken(leftExpr, rightExpr);
-                            break;
-                        default:
-                            throw new Exception("Not supported operator");
-                    }
+                    tokens.Dequeue();
+                    return BuildExpressionByOperatorToken(leftToken.operatorToken.Content, leftExpr, rightExpr);
                 }
                 else if (leftToken.operatorPriority < rightToken.operatorPriority)
                 {
                     ExpressionToken ep = BuildExpressionToken(tokens, 0);
-                    int a = 1;
-                    int b = 2;
-                    switch (leftToken.operatorToken.Content)
-                    {
-                        case "+":
-                            leftExpr = BuildPlusToken(leftExpr, ep);
-                            break;
-                        case "-":
-                            leftExpr = BuildMinusToken(leftExpr, ep);
-                            break;
-                        case "*":
-                            leftExpr = BuildTimesToken(leftExpr, ep);
-                            break;
-                        default:
-                            throw new Exception("Not supported operator");
-                    }
+                    leftExpr = BuildExpressionByOperatorToken(leftToken.operatorToken.Content, leftExpr, ep);
                 }
                 else
                 {
-                    var tdeq = tokens.Dequeue();
-                    switch (leftToken.operatorToken.Content)
-                    {
-                        case "+":
-                            leftExpr = BuildPlusToken(leftExpr, rightExpr);
-                            break;
-                        case "-":
-                            leftExpr = BuildMinusToken(leftExpr, rightExpr);
-                            break;
-                        case "*":
-                            leftExpr = BuildTimesToken(leftExpr, rightExpr);
-                            break;
-                        default:
-                            throw new Exception("Not supported operator");
-                    }
+                    tokens.Dequeue();
+                    leftExpr = BuildExpressionByOperatorToken(leftToken.operatorToken.Content, leftExpr, rightExpr);
                 }
             }
             return leftExpr;
         }
+
+        private ExpressionToken BuildExpressionByOperatorToken(String exprOperator, ExpressionToken leftExpr, ExpressionToken rightExpr)
+        {
+            switch (exprOperator)
+            {
+                case "+":
+                    return BuildPlusToken(leftExpr, rightExpr);
+                    break;
+                case "-":
+                    return BuildMinusToken(leftExpr, rightExpr);
+                    break;
+                case "*":
+                    return BuildTimesToken(leftExpr, rightExpr);
+                    break;
+                default:
+                    throw new Exception("Not supported operator");
+            }
+        }
+
         private RefToken BuildVariableToken(ParserToken token)
         {
             if (IsConstant(token.Content)) {
