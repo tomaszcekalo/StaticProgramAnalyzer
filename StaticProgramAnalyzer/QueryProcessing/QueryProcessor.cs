@@ -1,7 +1,9 @@
 ﻿using StaticProgramAnalyzer.QueryProcessing.Predicates;
+using StaticProgramAnalyzer.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 
 namespace StaticProgramAnalyzer.QueryProcessing
 {
@@ -40,18 +42,71 @@ namespace StaticProgramAnalyzer.QueryProcessing
             return typeDictionary;
         }
 
+
         public string ProcessQuery(string declarations, string selects)
         {
             var declarationDictionary = GetDeclarations(declarations.Trim());
-            var predicates = GetPredicates(declarationDictionary, selects);
-            var hits = _pkb.ProceduresTree
-                .Concat(_pkb.ProceduresTree.SelectMany(p => p.GetChildren()))
-                .Where(s => predicates.All(p => p.Evaluate(s)))
-                .OrderBy(x => x.Source.LineNumber)
-                .Select(s => s.ToString())
-                .Distinct();
-            var result = string.Join(", ", hits);// query result display
-            return result;
+            var variablePredicates = declarationDictionary.ToDictionary(x => x.Key, x => GetTypePredicate(x.Value));
+
+            var variableQueries = variablePredicates.ToDictionary(
+                key => key.Key,
+                value => _pkb.TokenList.Where(token => value.Value.Evaluate(token)));
+            var variableNames = declarationDictionary.Keys.ToList();
+
+            var firstKey = variableNames[0];
+            var a = variableQueries[firstKey]
+                .Select(x => new Dictionary<string, IToken>()
+                {
+                    {firstKey, x},
+                });
+            // adding all from declaration
+            for( var i = 1; i<variableNames.Count; i++)
+            {
+                var varName= variableNames[i];
+                a = a.SelectMany(fir => variableQueries[varName].Select(sec =>
+                {
+                    var newDict = fir.ToDictionary(x => x.Key, y => y.Value);
+                    newDict.Add(varName, sec);
+                    return newDict;
+                })).ToList();
+            }
+            var b = a.ToList();
+            // selects
+            var variables = GetVariablesToSelect(selects, variablePredicates);
+
+            var output = b.Select(x =>
+            {
+                var sb = new StringBuilder();
+                sb.Append(x[variableNames[0]].ToString());
+                return (x, sb);
+            });
+
+            for(int i=1; i<variableNames.Count; i++)
+            {
+                var varName = variableNames[i];
+                output = output.Select(x =>
+                {
+                    x.sb.Append(" ");
+                    x.sb.Append(x.x[varName].ToString());
+                    return x;
+                });
+            }
+
+            var outputs = output.Select(x => x.sb.ToString()).Distinct();
+            var resultString = string.Join(", ", outputs);
+
+            return resultString;
+        }
+
+        public void Calls(Dictionary<string, IEnumerable<Tokens.IToken>> variableQueries, string callerVariableName, string calledVariableName)
+        {
+            var calls = variableQueries[callerVariableName].Select(x => new
+            {
+                caller = x,
+                called = x.GetChildren().OfType<Tokens.CallToken>().Where(child => variableQueries[calledVariableName].Any(bb => bb.ToString() == child.ProcedureName))
+            }).Where(x => x.called.Any());
+            variableQueries[callerVariableName] = calls.Select(x => x.caller);
+            variableQueries[calledVariableName] = calls.SelectMany(x => x.called);
         }
 
         public List<string> GetVariablesToSelect(string selects, Dictionary<string, IPredicate> variableQueries)
@@ -65,7 +120,8 @@ namespace StaticProgramAnalyzer.QueryProcessing
                 while (getAnother)
                 {
                     token = queue.Dequeue();
-                    token = token.Replace("<", "").Replace(">", "");
+                    token = token.Replace("<", "")
+                        .Replace(">", "");
 
                     if (token.EndsWith(','))
                     {
@@ -118,46 +174,5 @@ namespace StaticProgramAnalyzer.QueryProcessing
             return null;// TODO : throw exception or choose what to do
         }
 
-        private List<IPredicate> GetPredicates(Dictionary<string, string> declarationDictionary, string selects)
-        {
-            Queue<string> queue = new Queue<string>(
-                selects.Split(' ',
-                StringSplitOptions.RemoveEmptyEntries));
-
-            var token = queue.Dequeue();
-            if (token == "Select")
-            {
-                token = declarationDictionary[queue.Dequeue()];
-                if (token == "procedure")
-                {
-                    return new List<IPredicate> { new IsProcedurePredicate() };
-                }
-                else if (token == "stmt")
-                {
-                    return new List<IPredicate> { new IsStatementPredicate() };
-                }
-                else if (token == "variable")
-                {
-                    return new List<IPredicate> { new IsVariablePredicate() };
-                }
-                else if (token == "while")
-                {
-                    return new List<IPredicate> { new IsWhilePredicate() };
-                }
-                else if (token == "if")
-                {
-                    return new List<IPredicate> { new IsIfTheElsePredicate() };
-                }
-                else if (token == "assign")
-                {
-                    return new List<IPredicate> { new IsAssignPredicate() };
-                }
-                else if (token == "while")
-                {
-                    return new List<IPredicate> { new IsWhilePredicate() };
-                }
-            }
-            return new List<IPredicate>();
-        }
     }
 }
