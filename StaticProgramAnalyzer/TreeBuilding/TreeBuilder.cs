@@ -97,29 +97,6 @@ namespace StaticProgramAnalyzer.TreeBuilding
             }
             return result;
         }
-        /*
-        class AssigmentPair
-        {
-            public static Dictionary<String, int> operatorPriorityDict = new Dictionary<string, int>(){
-                {"+", 0 },
-                {"-", 0 },
-                {"*", 1 },
-                {"/", 1 },
-                {"(", 100 },
-                {")", -100 },
-                {";", -1000 }
-            };
-            public ParserToken refToken;
-            public ParserToken operatorToken;
-            public int operatorPriority;
-            public AssigmentPair() { }
-            public AssigmentPair(ParserToken refToken, ParserToken operatorToken)
-            {
-                this.refToken = refToken;
-                this.operatorToken = operatorToken;
-                operatorPriority = AssigmentPair.operatorPriorityDict[operatorToken.Content];
-            }
-        }*/
         class ExpresionTokenPriority
         {
             public static Dictionary<String, int> operatorPriorityDict = new Dictionary<string, int>(){
@@ -256,15 +233,25 @@ namespace StaticProgramAnalyzer.TreeBuilding
             if (IsConstant(token.Content)) {
                 return new ConstantToken(token.Content);
             } else {
-                return new VariableToken(token.Content);
+                return new VariableToken(token.Content, GetTestValue(token.Content));
             }
         }
-
+        Int64 GetTestValue(String variableName)
+        {
+            int value = 0;
+            //forgive me
+            foreach(byte c in variableName)
+            {
+                value += c;
+            }
+            return value;
+        }
         private ExpressionToken BuildPlusToken(ExpressionToken leftToken, ExpressionToken rightToken)
         {
             var expr = new PlusToken(String.Format("{0} + {1}", leftToken.Content, rightToken.Content));
             expr.Left = leftToken;
             expr.Right = rightToken;
+            expr.TestValue = leftToken.TestValue + rightToken.TestValue;
             return expr;
         }
         private ExpressionToken BuildMinusToken(ExpressionToken leftToken, ExpressionToken rightToken)
@@ -272,6 +259,7 @@ namespace StaticProgramAnalyzer.TreeBuilding
             var expr = new MinusToken(String.Format("{0} - {1}", leftToken.Content, rightToken.Content));
             expr.Left = leftToken;
             expr.Right = rightToken;
+            expr.TestValue = leftToken.TestValue - rightToken.TestValue;
             return expr;
         }
         private ExpressionToken BuildTimesToken(ExpressionToken leftToken, ExpressionToken rightToken)
@@ -279,6 +267,7 @@ namespace StaticProgramAnalyzer.TreeBuilding
             var expr = new TimesToken(String.Format("{0} * {1}", leftToken.Content, rightToken.Content));
             expr.Left = leftToken;
             expr.Right = rightToken;
+            expr.TestValue = leftToken.TestValue * rightToken.TestValue;
             return expr;
         }
 

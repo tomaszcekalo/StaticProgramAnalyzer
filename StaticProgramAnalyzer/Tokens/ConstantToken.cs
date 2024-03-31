@@ -9,6 +9,7 @@ namespace StaticProgramAnalyzer.Tokens
     {
         public ConstantToken(string content) : base(content)
         {
+            TestValue = int.Parse(content);
         }
     }
 }
