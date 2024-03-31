@@ -6,7 +6,7 @@ namespace StaticProgramAnalyzer.Tokens
 {
     public class ExpressionToken
     {
-        String Content;
+        public String Content;
 
         public ExpressionToken(string content)
         {
