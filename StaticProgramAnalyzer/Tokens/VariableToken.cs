@@ -9,6 +9,7 @@ namespace StaticProgramAnalyzer.Tokens
         public VariableToken(string content, Int64 testValue = 0) : base(content)
         {
             TestValue = testValue;
+            UsesVariables.Add(content);
         }
     }
 }

@@ -9,6 +9,7 @@ namespace StaticProgramAnalyzer.Tokens
     {
         public string Name { get; internal set; }
         public List<StatementToken> StatementList { get; internal set; }
+        public List<AssignToken> AssigmentList { get; internal set; }
 
         public IEnumerable<IToken> GetChildren()
         {

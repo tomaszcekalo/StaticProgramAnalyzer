@@ -49,6 +49,7 @@ namespace StaticProgramAnalyzer.TreeBuilding
             token = tokenQueue.Dequeue();
             Contract.Assert(token.Content == "{");
             procedure.StatementList = GetStatementList(procedure, tokenQueue);
+            procedure.AssigmentList = procedure.StatementList.OfType<AssignToken>().ToList();
 
             return procedure;
         }
@@ -130,10 +131,15 @@ namespace StaticProgramAnalyzer.TreeBuilding
             AssignToken assignToken = new(parent);
             CheckIfValidName(variableName);
             assignToken.Left = new VariableToken(variableName);
-            tokenQueue.Dequeue(); //deque eqals sign 
+            assignToken.VariableName = assignToken.Left.Content;
+            var eq = tokenQueue.Dequeue(); //deque equals sign 
+            assignToken.LineNumber = eq.LineNumber;
             
             assignToken.Right = BuildExpressionToken(tokenQueue).expresionToken;
-
+            assignToken.Modifies = assignToken.Left.UsesVariables;
+            assignToken.UsesVariables = assignToken.Right.UsesVariables;
+            assignToken.UsesConstants = assignToken.Right.UsesConstants;
+            
             //assignToken.FakeExpression = string.Join(" ", tokens.Select(t => t.refToken.Content + " " + t.operatorToken.Content));
             return assignToken;
         }
@@ -252,6 +258,10 @@ namespace StaticProgramAnalyzer.TreeBuilding
             expr.Left = leftToken;
             expr.Right = rightToken;
             expr.TestValue = leftToken.TestValue + rightToken.TestValue;
+            expr.UsesVariables.UnionWith(leftToken.UsesVariables);
+            expr.UsesVariables.UnionWith(rightToken.UsesVariables);
+            expr.UsesConstants.UnionWith(leftToken.UsesConstants);
+            expr.UsesConstants.UnionWith(rightToken.UsesConstants);
             return expr;
         }
         private ExpressionToken BuildMinusToken(ExpressionToken leftToken, ExpressionToken rightToken)
@@ -260,6 +270,10 @@ namespace StaticProgramAnalyzer.TreeBuilding
             expr.Left = leftToken;
             expr.Right = rightToken;
             expr.TestValue = leftToken.TestValue - rightToken.TestValue;
+            expr.UsesVariables.UnionWith(leftToken.UsesVariables);
+            expr.UsesVariables.UnionWith(rightToken.UsesVariables);
+            expr.UsesConstants.UnionWith(leftToken.UsesConstants);
+            expr.UsesConstants.UnionWith(rightToken.UsesConstants);
             return expr;
         }
         private ExpressionToken BuildTimesToken(ExpressionToken leftToken, ExpressionToken rightToken)
@@ -268,6 +282,10 @@ namespace StaticProgramAnalyzer.TreeBuilding
             expr.Left = leftToken;
             expr.Right = rightToken;
             expr.TestValue = leftToken.TestValue * rightToken.TestValue;
+            expr.UsesVariables.UnionWith(leftToken.UsesVariables);
+            expr.UsesVariables.UnionWith(rightToken.UsesVariables);
+            expr.UsesConstants.UnionWith(leftToken.UsesConstants);
+            expr.UsesConstants.UnionWith(rightToken.UsesConstants);
             return expr;
         }
 
