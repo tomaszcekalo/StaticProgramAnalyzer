@@ -248,7 +248,7 @@ namespace StaticProgramAnalyzer.TreeBuilding
         }
         private ExpressionToken BuildPlusToken(ExpressionToken leftToken, ExpressionToken rightToken)
         {
-            var expr = new PlusToken(String.Format("{0} + {1}", leftToken.Content, rightToken.Content));
+            var expr = new PlusToken(String.Format("<+,{0},{1}>", leftToken.Content, rightToken.Content));
             expr.Left = leftToken;
             expr.Right = rightToken;
             expr.TestValue = leftToken.TestValue + rightToken.TestValue;
@@ -256,7 +256,7 @@ namespace StaticProgramAnalyzer.TreeBuilding
         }
         private ExpressionToken BuildMinusToken(ExpressionToken leftToken, ExpressionToken rightToken)
         {
-            var expr = new MinusToken(String.Format("{0} - {1}", leftToken.Content, rightToken.Content));
+            var expr = new MinusToken(String.Format("<-,{0},{1}>", leftToken.Content, rightToken.Content));
             expr.Left = leftToken;
             expr.Right = rightToken;
             expr.TestValue = leftToken.TestValue - rightToken.TestValue;
@@ -264,7 +264,7 @@ namespace StaticProgramAnalyzer.TreeBuilding
         }
         private ExpressionToken BuildTimesToken(ExpressionToken leftToken, ExpressionToken rightToken)
         {
-            var expr = new TimesToken(String.Format("{0} * {1}", leftToken.Content, rightToken.Content));
+            var expr = new TimesToken(String.Format("<*,{0},{1}>", leftToken.Content, rightToken.Content));
             expr.Left = leftToken;
             expr.Right = rightToken;
             expr.TestValue = leftToken.TestValue * rightToken.TestValue;
