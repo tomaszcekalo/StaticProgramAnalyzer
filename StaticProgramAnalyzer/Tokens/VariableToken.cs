@@ -5,24 +5,32 @@ using System.Text;
 
 namespace StaticProgramAnalyzer.Tokens
 {
-    internal class VariableToken : IToken
+    public abstract class VariableToken : IHasParentToken
     {
         public VariableToken(IToken parent, string name)
         {
-            Name = name;
+            Parent = parent;
+            VariableName = name;
         }
 
-        public string Name { get; internal set; }
+        public string VariableName { get; set; }
+        public IToken Parent { get; }
 
-        public IEnumerable<IToken> GetChildren()
+        public IEnumerable<IToken> GetDescentands()
         {
             return new List<IToken>();
         }
 
         public override string ToString()
         {
-            return Name;
+            return VariableName;
         }
+
+        public IEnumerable<IToken> GetChildren()
+        {
+            return new List<IToken>();
+        }
+
         public ParserToken Source { get; set; }
     }
 }

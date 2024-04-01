@@ -42,7 +42,6 @@ namespace StaticProgramAnalyzer.QueryProcessing
             return typeDictionary;
         }
 
-
         public string ProcessQuery(string declarations, string selects)
         {
             var declarationDictionary = GetDeclarations(declarations.Trim());
@@ -54,36 +53,49 @@ namespace StaticProgramAnalyzer.QueryProcessing
             var variableNames = declarationDictionary.Keys.ToList();
 
             var firstKey = variableNames[0];
-            var a = variableQueries[firstKey]
+            var combinations = variableQueries[firstKey]
                 .Select(x => new Dictionary<string, IToken>()
                 {
                     {firstKey, x},
                 });
             // adding all from declaration
-            for( var i = 1; i<variableNames.Count; i++)
+            for (var i = 1; i < variableNames.Count; i++)
             {
-                var varName= variableNames[i];
-                a = a.SelectMany(fir => variableQueries[varName].Select(sec =>
+                var varName = variableNames[i];
+                combinations = combinations.SelectMany(fir => variableQueries[varName].Select(sec =>
                 {
                     var newDict = fir.ToDictionary(x => x.Key, y => y.Value);
                     newDict.Add(varName, sec);
                     return newDict;
                 })).ToList();
             }
-            var b = a.ToList();
-            // selects
-            var variables = GetVariablesToSelect(selects, variablePredicates);
 
-            var output = b.Select(x =>
+            // here are conditions
+            var conditionStrings = selects.Split(new string[]
+            {
+                " such that ",
+                " with ",
+                " and ",
+            }, StringSplitOptions.RemoveEmptyEntries)
+                .Select(x => x.Trim())
+                .ToList();
+            for (int i = 1; i < conditionStrings.Count; i++)
+            {
+                combinations = FilterByCondition(combinations, conditionStrings[i]);
+            }
+            // get only variables that are in select
+            var variableToSelect = GetVariablesToSelect(selects, variablePredicates);
+
+            var output = combinations.Select(x =>
             {
                 var sb = new StringBuilder();
-                sb.Append(x[variableNames[0]].ToString());
+                sb.Append(x[variableToSelect[0]].ToString());
                 return (x, sb);
             });
 
-            for(int i=1; i<variableNames.Count; i++)
+            for (int i = 1; i < variableToSelect.Count; i++)
             {
-                var varName = variableNames[i];
+                var varName = variableToSelect[i];
                 output = output.Select(x =>
                 {
                     x.sb.Append(" ");
@@ -91,22 +103,125 @@ namespace StaticProgramAnalyzer.QueryProcessing
                     return x;
                 });
             }
-
+            // build strings (variables, or variable tuples)
             var outputs = output.Select(x => x.sb.ToString()).Distinct();
+            // join all of them together
             var resultString = string.Join(", ", outputs);
 
             return resultString;
         }
 
-        public void Calls(Dictionary<string, IEnumerable<Tokens.IToken>> variableQueries, string callerVariableName, string calledVariableName)
+        public IEnumerable<Dictionary<string, IToken>> FilterByParameter(IEnumerable<Dictionary<string, IToken>> combinations, string condition)
         {
-            var calls = variableQueries[callerVariableName].Select(x => new
+            var array = condition.Split('=');
+            var leftArray = array[0].Split('.', StringSplitOptions.RemoveEmptyEntries);
+            var pqlVar = leftArray[0].Trim();
+            var pqlProperty = leftArray[1].Trim();
+            var value = array[1].Trim().Replace("\"", "");// TODO we probably want to compare with other parameters
+
+            if (pqlProperty == "procName")
             {
-                caller = x,
-                called = x.GetChildren().OfType<Tokens.CallToken>().Where(child => variableQueries[calledVariableName].Any(bb => bb.ToString() == child.ProcedureName))
-            }).Where(x => x.called.Any());
-            variableQueries[callerVariableName] = calls.Select(x => x.caller);
-            variableQueries[calledVariableName] = calls.SelectMany(x => x.called);
+                return combinations.Where(x =>
+                {
+                    var withProcname = x[pqlVar] as IHasProcedureName;
+                    return withProcname?.ProcedureName == value.Trim();
+                });
+            }
+            if (pqlProperty == "stmt#")
+            {
+                var lineNumber = int.Parse(array[1].Trim());
+                return combinations.Where(x => x[pqlVar].Source.LineNumber == lineNumber);
+            }
+            if (pqlProperty == "varName")
+            {
+                return combinations.Where(x =>
+                {
+                    var withVarName = x[pqlVar] as VariableToken;
+                    return withVarName?.VariableName == array[1].Trim();
+                });
+            }
+            return combinations;// todo throw exception?
+        }
+
+        public IEnumerable<Dictionary<string, IToken>> FilterByCondition(
+            IEnumerable<Dictionary<string, IToken>> combinations,
+            string condition)
+        {
+            if (condition.Contains("="))
+            {
+                return FilterByParameter(combinations, condition);
+            }
+            if (condition.StartsWith("Calls*"))
+            {
+                //return CallsStar(combinations, parametersArray[0], parametersArray[1]);
+            }
+            else if (condition.StartsWith("Calls"))
+            {
+                var parameters = condition.Split(new char[] { '(', ')' },
+                    StringSplitOptions.RemoveEmptyEntries);
+                var parametersArray = parameters.Last().Split(',', StringSplitOptions.RemoveEmptyEntries);
+                return Calls(combinations, parametersArray[0], parametersArray[1]);
+            }
+            if (condition.StartsWith("Parent*"))
+            {
+                //TODO ParentStar
+            }
+            else if (condition.StartsWith("Parent"))
+            {
+                var parameters = condition.Split(new char[] { '(', ')' },
+                    StringSplitOptions.RemoveEmptyEntries);
+                var parametersArray = parameters.Last().Split(',', StringSplitOptions.RemoveEmptyEntries);
+                return Parent(combinations, parametersArray[0], parametersArray[1]);
+            }
+
+            return combinations;
+        }
+
+        private IEnumerable<Dictionary<string, IToken>> Parent(
+            IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
+        {
+            //if second parameter is a line number
+            if (int.TryParse(right, out int lineNumber))
+            {
+                //parents of statements at that line number
+                return combinations.Where(c =>
+                {
+                    var children = c[left].GetDescentands();
+                    return children.OfType<IHasParentToken>()
+                        .Any(x => x.Source.LineNumber == lineNumber
+                            && x.Parent == c[left]);
+                }).ToList();
+            }
+            return combinations.Where(x =>
+                (x[right.Trim()] as StatementToken)?.Parent == x[left.Trim()]
+            );
+        }
+
+        private IEnumerable<Dictionary<string, IToken>> Calls(
+            IEnumerable<Dictionary<string, IToken>> combinations,
+            string left,
+            string right)
+        {
+            right = right.Trim();
+            if (left == "_")
+            {
+                var called = _pkb.TokenList
+                    .OfType<CallToken>()
+                    .Select(x => x.ProcedureName);
+                return combinations.Where(x =>
+                {
+                    var rightToken = x[right];
+                    return called.Contains(rightToken.ToString());
+                });
+            }
+            return combinations.Where(x =>
+            {
+                var leftToken = x[left.Trim()];
+                var descendantsThatCall = leftToken.GetDescentands()
+                    .OfType<CallToken>();
+                return descendantsThatCall
+                    .Any(call => right == "_" || call.ProcedureName == x[right].ToString());
+            });
         }
 
         public List<string> GetVariablesToSelect(string selects, Dictionary<string, IPredicate> variableQueries)
@@ -173,6 +288,5 @@ namespace StaticProgramAnalyzer.QueryProcessing
             }
             return null;// TODO : throw exception or choose what to do
         }
-
     }
 }

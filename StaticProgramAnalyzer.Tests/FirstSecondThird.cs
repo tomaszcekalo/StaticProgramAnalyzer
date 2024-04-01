@@ -61,9 +61,9 @@ namespace StaticProgramAnalyzer.Tests
             var procedures = treeBuilder.GetPKB(tokens);
             //Assert
             Assert.AreEqual(3, procedures.ProceduresTree.Count);
-            Assert.AreEqual("First", procedures.ProceduresTree[0].Name);
-            Assert.AreEqual("Second", procedures.ProceduresTree[1].Name);
-            Assert.AreEqual("Third", procedures.ProceduresTree[2].Name);
+            Assert.AreEqual("First", procedures.ProceduresTree[0].ProcedureName);
+            Assert.AreEqual("Second", procedures.ProceduresTree[1].ProcedureName);
+            Assert.AreEqual("Third", procedures.ProceduresTree[2].ProcedureName);
         }
 
         [TestMethod]
@@ -115,7 +115,7 @@ namespace StaticProgramAnalyzer.Tests
         }
 
         [TestMethod]
-        public void CallsWithDiscard()
+        public void CallsWithDiscardOnTheRight()
         {
             //Q1. Which procedures call at least one procedure?
             //Arrange
@@ -124,7 +124,7 @@ namespace StaticProgramAnalyzer.Tests
             //Act
             var result = processor.ProcessQuery("procedure p;", "Select p such that Calls(p, _)");
             //Assert
-            Assert.AreEqual("First", result);
+            Assert.AreEqual("First, Second", result);
         }
 
         [TestMethod]
@@ -141,7 +141,7 @@ namespace StaticProgramAnalyzer.Tests
         }
 
         [TestMethod]
-        public void CallsWithDiscard2()
+        public void CallsWithDiscardOnTheLeft()
         {
             //Q2. Which procedures are called by at least one other procedure?
             //Arrange
@@ -323,6 +323,71 @@ namespace StaticProgramAnalyzer.Tests
             var result = processor.ProcessQuery("", "Select BOOLEAN such that Calls (_, _)");
             //Assert
             Assert.AreEqual("true", result);
+        }
+        [TestMethod]
+        public void FindParent7()
+        {
+            //If there is a procedure that calls some other procedure in the program, the result is TRUE;
+            //otherwise, the result is FALSE.:
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb);
+            //Act
+            var result = processor.ProcessQuery("stmt s;", "Select s such that Parent(s,7)");
+            //Assert
+            Assert.AreEqual("6", result);
+        }
+        [TestMethod]
+        public void FindParent8()
+        {
+            //If there is a procedure that calls some other procedure in the program, the result is TRUE;
+            //otherwise, the result is FALSE.:
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb);
+            //Act
+            var result = processor.ProcessQuery("stmt s;", "Select s such that Parent(s,8)");
+            //Assert
+            Assert.AreEqual("6", result);
+        }
+        [TestMethod]
+        public void FindParent9()
+        {
+            //If there is a procedure that calls some other procedure in the program, the result is TRUE;
+            //otherwise, the result is FALSE.:
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb);
+            //Act
+            var result = processor.ProcessQuery("stmt s;", "Select s such that Parent(s,9)");
+            //Assert
+            Assert.AreEqual("6", result);
+        }
+        [TestMethod]
+        public void FindParent11()
+        {
+            //If there is a procedure that calls some other procedure in the program, the result is TRUE;
+            //otherwise, the result is FALSE.:
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb);
+            //Act
+            var result = processor.ProcessQuery("stmt s;", "Select s such that Parent(s,11)");
+            //Assert
+            Assert.AreEqual("10", result);
+        }
+        [TestMethod]
+        public void FindParent12()
+        {
+            //If there is a procedure that calls some other procedure in the program, the result is TRUE;
+            //otherwise, the result is FALSE.:
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb);
+            //Act
+            var result = processor.ProcessQuery("stmt s;", "Select s such that Parent(s,12)");
+            //Assert
+            Assert.AreEqual("10", result);
         }
     }
 }

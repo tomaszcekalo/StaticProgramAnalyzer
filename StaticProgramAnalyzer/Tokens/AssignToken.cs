@@ -7,16 +7,15 @@ namespace StaticProgramAnalyzer.Tokens
 {
     public class AssignToken : StatementToken
     {
-        public AssignToken(IToken parent, ParserToken token, string fakeExpression) : base(parent)
+        public AssignToken(IToken parent, ParserToken source, string fakeExpression) : base(parent, source)
         {
             Variables= new List<IToken>()
             {
-                new VariableToken(this, token.Content)
+                new ModifyVariableToken(this, source.Content)
                 {
-                    Source = token
+                    Source = source
                 }
             };
-            Source = token;
             FakeExpression = fakeExpression;
             StringBuilder sb = new StringBuilder();
             foreach (var c in fakeExpression)
@@ -30,9 +29,9 @@ namespace StaticProgramAnalyzer.Tokens
                 {
                     if (sb.Length > 0)
                     {
-                        Variables.Add(new VariableToken(this, sb.ToString())
+                        Variables.Add(new UseVariableToken(this, sb.ToString())
                         {
-                            Source = token
+                            Source = source
                         });
                     }
                     sb.Clear();
@@ -45,6 +44,11 @@ namespace StaticProgramAnalyzer.Tokens
         List<IToken> Variables { get; set; }
 
         public override IEnumerable<IToken> GetChildren()
+        {
+            return Variables;
+        }
+
+        public override IEnumerable<IToken> GetDescentands()
         {
             return Variables;
         }

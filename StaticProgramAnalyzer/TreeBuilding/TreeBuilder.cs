@@ -33,11 +33,11 @@ namespace StaticProgramAnalyzer.TreeBuilding
             return new ProgramKnowledgeBase()
             {
                 ProceduresTree = procedures,
-                TokenList = procedures.Concat(procedures.SelectMany(p => p.GetChildren())),
+                TokenList = procedures.Concat(procedures.SelectMany(p => p.GetDescentands())),
                 CallsDictionary = procedures.Select(p => new
                 {
-                    procedureName = p.Name,
-                    calls = p.GetChildren().OfType<CallToken>().Select(c => c.ProcedureName)
+                    procedureName = p.ProcedureName,
+                    calls = p.GetDescentands().OfType<CallToken>().Select(c => c.ProcedureName)
                 })
                 .SelectMany(p => p.calls.Select(c => new
                 {
@@ -55,7 +55,7 @@ namespace StaticProgramAnalyzer.TreeBuilding
                 Source = token
             };
             CheckIfValidName(token.Content);
-            procedure.Name = token.Content;
+            procedure.ProcedureName = token.Content;
             token = tokenQueue.Dequeue();
             Contract.Assert(token.Content == "{");
             procedure.StatementList = GetStatementList(procedure, tokenQueue);
@@ -128,8 +128,8 @@ namespace StaticProgramAnalyzer.TreeBuilding
 
         public StatementToken BuildProcedureCall(IToken parent, Queue<ParserToken> tokenQueue)
         {
-            CallToken callToken = new(parent);
             var token = tokenQueue.Dequeue();
+            CallToken callToken = new(parent, token);
             CheckIfValidName(token.Content);
 
             callToken.ProcedureName = token.Content;
@@ -152,8 +152,8 @@ namespace StaticProgramAnalyzer.TreeBuilding
 
         public StatementToken BuildIfStatement(IToken parent, Queue<ParserToken> tokenQueue)
         {
-            IfThenElseToken ifToken = new(parent);
             ParserToken token = tokenQueue.Dequeue();
+            IfThenElseToken ifToken = new(parent, token);
             CheckIfValidName(token.Content);
             ifToken.VariableName = token.Content;
             token = tokenQueue.Dequeue();

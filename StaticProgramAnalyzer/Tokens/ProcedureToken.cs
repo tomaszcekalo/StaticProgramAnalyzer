@@ -6,31 +6,26 @@ using System.Text;
 
 namespace StaticProgramAnalyzer.Tokens
 {
-    public class ProcedureToken : IToken
+    public class ProcedureToken : IHasProcedureName
     {
-        public string Name { get; internal set; }
-        public List<StatementToken> StatementList { get; internal set; }
+        public string ProcedureName { get; set; }
+        public List<StatementToken> StatementList { get; set; }
         public ParserToken Source { get; set; }
 
         public IEnumerable<IToken> GetChildren()
         {
-            return StatementList.Concat(
-                StatementList.SelectMany(x => x.GetChildren()));
-        }
-        public override string ToString()
-        {
-            return Name;
+            return StatementList;
         }
 
-        //public override string ToString()
-        //{
-        //    StringBuilder sb = new StringBuilder();
-        //    sb.AppendLine($"procedure_{Name}(procedure {Name}) --> stmtLst{Name}");
-        //    foreach (var statement in StatementList)
-        //    {
-        //        sb.AppendLine(statement.ToString());
-        //    }
-        //    return sb.ToString();
-        //}
+        public IEnumerable<IToken> GetDescentands()
+        {
+            return StatementList.Concat(
+                StatementList.SelectMany(x => x.GetDescentands()));
+        }
+
+        public override string ToString()
+        {
+            return ProcedureName;
+        }
     }
 }

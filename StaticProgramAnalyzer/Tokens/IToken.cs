@@ -7,6 +7,7 @@ namespace StaticProgramAnalyzer.Tokens
 {
     public interface IToken
     {
+        public IEnumerable<IToken> GetDescentands();
         public IEnumerable<IToken> GetChildren();
         public ParserToken Source { get; set; }
     }
