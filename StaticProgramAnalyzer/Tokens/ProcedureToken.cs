@@ -12,6 +12,8 @@ namespace StaticProgramAnalyzer.Tokens
         public List<StatementToken> StatementList { get; set; }
         public ParserToken Source { get; set; }
 
+        public IToken Parent => null;
+
         public IEnumerable<IToken> GetChildren()
         {
             return StatementList;

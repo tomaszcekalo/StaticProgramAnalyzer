@@ -5,11 +5,11 @@ using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
 
-namespace StaticProgramAnalyzer.TreeBuilding
+namespace StaticProgramAnalyzer.KnowledgeBuilding
 {
-    public class TreeBuilder
+    public class KnowledgeBuilder
     {
-        public TreeBuilder(Parser parser)
+        public KnowledgeBuilder(Parser parser)
         {
             Parser = parser;
         }

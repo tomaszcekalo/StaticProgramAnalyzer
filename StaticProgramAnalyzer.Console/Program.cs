@@ -1,8 +1,6 @@
-﻿using StaticProgramAnalyzer.Parsing;
+﻿using StaticProgramAnalyzer.KnowledgeBuilding;
+using StaticProgramAnalyzer.Parsing;
 using StaticProgramAnalyzer.QueryProcessing;
-using StaticProgramAnalyzer.Tokens;
-using StaticProgramAnalyzer.TreeBuilding;
-using System.Reflection.Emit;
 
 namespace StaticProgramAnalyzer.Console
 {
@@ -13,7 +11,7 @@ namespace StaticProgramAnalyzer.Console
             var parser = new Parser();
             var lines = File.ReadAllLines(args[0]);
             var tokens = parser.Parse(lines);
-            var treeBuilder = new TreeBuilder(parser);
+            var treeBuilder = new KnowledgeBuilder(parser);
             var pkb = treeBuilder.GetPKB(tokens);
             var processor = new QueryProcessor(pkb, new QueryResultProjector());
 

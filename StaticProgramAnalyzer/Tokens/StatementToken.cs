@@ -5,20 +5,20 @@ using System.Text;
 
 namespace StaticProgramAnalyzer.Tokens
 {
-    public abstract class StatementToken : IHasParentToken
+    public abstract class StatementToken : IToken
     {
         public StatementToken(IToken parent, ParserToken source)
         {
-            Parent = parent;
+            this.Parent = parent;
             Source = source;
         }
 
-        public IToken Parent { get; }
 
         public abstract IEnumerable<IToken> GetDescentands();
 
         public abstract IEnumerable<IToken> GetChildren();
 
+        public IToken Parent { get; }
         public ParserToken Source { get; set; }
     }
 }

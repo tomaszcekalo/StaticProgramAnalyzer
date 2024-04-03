@@ -154,7 +154,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
             }
             if (condition.StartsWith("Parent*"))
             {
-                //TODO ParentStart
+                return ParentStar(combinations, parametersArray[0], parametersArray[1]);
             }
             else if (condition.StartsWith("Parent"))
             {
@@ -172,6 +172,35 @@ namespace StaticProgramAnalyzer.QueryProcessing
             return combinations;
         }
 
+        private IEnumerable<Dictionary<string, IToken>> ParentStar(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
+        {
+            //if second parameter is a line number
+            if (int.TryParse(right, out int lineNumber))
+            {
+                //parents of statements at that line number
+                return combinations.Where(c =>
+                {
+                    var children = c[left].GetDescentands();
+                    return children
+                        .Any(x => x.Source.LineNumber == lineNumber
+                            && x.Parent == c[left]);
+                }).ToList();
+            }
+            left=left.Trim();
+            right = right.Trim();
+            return combinations.Where(x =>
+            {
+                //for all parents of right
+                var parent = x[left];
+                while(parent!=null)
+                {
+                    if (parent == x[right])
+                        return true;
+                    parent = parent.Parent;
+                }
+                return false;
+            });
+        }
 
         private IEnumerable<Dictionary<string, IToken>> Modifies(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
         {
@@ -187,7 +216,6 @@ namespace StaticProgramAnalyzer.QueryProcessing
             }).ToList();
             var assignmentProcedures = assignments
                 .Select(x=> x[left])
-                .OfType<IHasParentToken>()
                 .Select(x => GetFinalParent(x, left).ProcedureName)
                 .ToList();
             var calls = combinations.Where(x => x[left] is CallToken)
@@ -196,13 +224,13 @@ namespace StaticProgramAnalyzer.QueryProcessing
             return assignments.Concat(calls);
         }
 
-        private ProcedureToken GetFinalParent(IHasParentToken x, string left)
+        private ProcedureToken GetFinalParent(IToken x, string left)
         {
             if(x.Parent is ProcedureToken)
             {
                 return x.Parent as ProcedureToken;
             }
-            return GetFinalParent(x.Parent as IHasParentToken, left);
+            return GetFinalParent(x.Parent, left);
         }
 
         private IEnumerable<Dictionary<string, IToken>> Uses(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
@@ -227,8 +255,8 @@ namespace StaticProgramAnalyzer.QueryProcessing
                 //parents of statements at that line number
                 return combinations.Where(c =>
                 {
-                    var children = c[left].GetDescentands();
-                    return children.OfType<IHasParentToken>()
+                    var children = c[left].GetChildren();
+                    return children
                         .Any(x => x.Source.LineNumber == lineNumber
                             && x.Parent == c[left]);
                 }).ToList();
@@ -254,6 +282,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
             string right)
         {
             right = right.Trim();
+            left = left.Trim();
             bool rightHasQuotes = right.StartsWith("\"") && right.EndsWith("\"");
             if(left.StartsWith("\"") && left.EndsWith("\""))
             {
@@ -266,7 +295,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
             }
             return combinations.Where(x =>
             {
-                var leftToken = x[left.Trim()];
+                var leftToken = x[left];
                 var descendantsThatCall = leftToken.GetDescentands()
                     .OfType<CallToken>();
                 if(rightHasQuotes)
@@ -275,7 +304,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
                         .Any(call => call.ProcedureName == right.Replace("\"",""));
                 }
                 return descendantsThatCall
-                    .Any(call => call.ProcedureName == x[right].ToString());
+                    .Any(call => right == "_" || call.ProcedureName == x[right].ToString());
             }).ToList();
         }
 

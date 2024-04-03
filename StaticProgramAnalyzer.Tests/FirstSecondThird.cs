@@ -1,11 +1,6 @@
-﻿using StaticProgramAnalyzer.Parsing;
+﻿using StaticProgramAnalyzer.KnowledgeBuilding;
+using StaticProgramAnalyzer.Parsing;
 using StaticProgramAnalyzer.QueryProcessing;
-using StaticProgramAnalyzer.TreeBuilding;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace StaticProgramAnalyzer.Tests
 {
@@ -40,7 +35,7 @@ namespace StaticProgramAnalyzer.Tests
 
         private string[] lines;
         private List<ParserToken> tokens;
-        private TreeBuilder treeBuilder;
+        private KnowledgeBuilder treeBuilder;
 
         [TestInitialize]
         public void Initialize()
@@ -49,7 +44,7 @@ namespace StaticProgramAnalyzer.Tests
 
             lines = _program.Split(Environment.NewLine);
             tokens = parser.Parse(lines);
-            treeBuilder = new TreeBuilder(parser);
+            treeBuilder = new KnowledgeBuilder(parser);
             //var pro = treeBuilder.GetProcedures(tokens);
         }
 

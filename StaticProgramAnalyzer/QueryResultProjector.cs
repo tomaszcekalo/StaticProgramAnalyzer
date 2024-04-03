@@ -42,7 +42,7 @@ namespace StaticProgramAnalyzer
 
         public string ProjectBoolean(IEnumerable<Dictionary<string, IToken>> combinations)
         {
-            return combinations.Any().ToString();
+            return combinations.Any().ToString().ToLower();
         }
     }
 }

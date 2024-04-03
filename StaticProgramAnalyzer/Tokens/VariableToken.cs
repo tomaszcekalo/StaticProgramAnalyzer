@@ -5,7 +5,7 @@ using System.Text;
 
 namespace StaticProgramAnalyzer.Tokens
 {
-    public abstract class VariableToken : IHasParentToken
+    public abstract class VariableToken : IToken
     {
         public VariableToken(IToken parent, string name)
         {
