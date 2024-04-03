@@ -9,6 +9,7 @@ namespace StaticProgramAnalyzer
     {
         public List<ProcedureToken> ProceduresTree { get; internal set; }
         public IEnumerable<IToken> TokenList { get; internal set; }
-        public Dictionary<string, string> CallsDictionary { get; internal set; }
+        public Dictionary<string, HashSet<string>> CallsDirectly { get; set; }
+        public Dictionary<string, HashSet<string>> AllCalls { get; set; }
     }
 }

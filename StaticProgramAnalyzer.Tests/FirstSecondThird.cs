@@ -71,7 +71,7 @@ namespace StaticProgramAnalyzer.Tests
         {
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("procedure p;", "Select p ");
             //Assert
@@ -83,7 +83,7 @@ namespace StaticProgramAnalyzer.Tests
         {
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("assign a;", "Select a ");
             //Assert
@@ -95,7 +95,7 @@ namespace StaticProgramAnalyzer.Tests
         {
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("variable v;", "Select v ");
             //Assert
@@ -107,7 +107,7 @@ namespace StaticProgramAnalyzer.Tests
         {
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("while w;", "Select w ");
             //Assert
@@ -120,7 +120,7 @@ namespace StaticProgramAnalyzer.Tests
             //Q1. Which procedures call at least one procedure?
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("procedure p;", "Select p such that Calls(p, _)");
             //Assert
@@ -133,7 +133,7 @@ namespace StaticProgramAnalyzer.Tests
             //Q1. Which procedures call at least one procedure?
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("procedure p, q;", "Select p such that Calls(p, q)");
             //Assert
@@ -146,7 +146,7 @@ namespace StaticProgramAnalyzer.Tests
             //Q2. Which procedures are called by at least one other procedure?
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("procedure q;", "Select q such that Calls(_, q)");
             //Assert
@@ -159,11 +159,23 @@ namespace StaticProgramAnalyzer.Tests
             //Q3. Find all pairs of procedures p and q such that p calls q.
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("procedure p, q;", "Select <p, q> such that Calls(p, q)");
             //Assert
             Assert.AreEqual("First Second, Second Third", result);
+        }
+        [TestMethod]
+        public void CallsStarTouple()
+        {
+            //Q3. Find all pairs of procedures p and q such that p calls q directly or indirectly.
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("procedure p, q;", "Select <p, q> such that Calls*(p, q)");
+            //Assert
+            Assert.AreEqual("First Second, First Third, Second Third", result);
         }
 
         [TestMethod]
@@ -172,7 +184,7 @@ namespace StaticProgramAnalyzer.Tests
             //Q4. Find procedure named “First”
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("procedure p;", "Select p such that p.procName = \"First\"");
             //Assert
@@ -185,7 +197,7 @@ namespace StaticProgramAnalyzer.Tests
             //Q4. Find procedure named “Second”
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("procedure p;", "Select p such that p.procName = \"Second\"");
             //Assert
@@ -198,7 +210,7 @@ namespace StaticProgramAnalyzer.Tests
             //Q4. Find procedure named “Third”
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("procedure p;", "Select p such that p.procName = \"Third\"");
             //Assert
@@ -211,7 +223,7 @@ namespace StaticProgramAnalyzer.Tests
             //Q5. Find all procedures that are called by “Second”
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("procedure p, q;", "Select q such that Calls(p, q) with p.procName=\"Second\"");
             //Assert
@@ -224,7 +236,7 @@ namespace StaticProgramAnalyzer.Tests
             //Q5. Find all procedures that are called by “Second”
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("procedure q;", "Select q such that Calls(\"Second\", q) ");
             //Assert
@@ -237,7 +249,7 @@ namespace StaticProgramAnalyzer.Tests
             //Q6. Find all procedures that call “Second” and modify the variable named "X"
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("procedure p;", "Select p such that Calls(p, \"Second\") and Modifies(p, \"x\") ");
             //Assert
@@ -250,7 +262,7 @@ namespace StaticProgramAnalyzer.Tests
             //Q12. Which statements contain a statement (at stmt#=”n”) that can be executed after line 10?
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("prog_line n; stmt s;", "Select s such that Next* (10, n) and Parent* (s, n) ");
             //Assert
@@ -263,7 +275,7 @@ namespace StaticProgramAnalyzer.Tests
             //Q14. Find all statements whose statement number is equal to some constant.
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("stmt s; constant c;", "Select s with s.stmt# = c.value");
             //Assert
@@ -276,7 +288,7 @@ namespace StaticProgramAnalyzer.Tests
             //Q16. Find statements that follow 10:
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("prog_line n; stmt s;", "Select s such that Follows* (n, s) with n = 10");
             //Assert
@@ -290,7 +302,7 @@ namespace StaticProgramAnalyzer.Tests
             //Think about a node in the AST as a relationship among its children.
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("assign a;", "Select a pattern a (\"x\", _)");
             //Assert
@@ -304,7 +316,7 @@ namespace StaticProgramAnalyzer.Tests
             //not be the case in other languages. Why?
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("assign a;", "Select a such that Modifies (a, \"x\")");
             //Assert
@@ -318,7 +330,7 @@ namespace StaticProgramAnalyzer.Tests
             //otherwise, the result is FALSE.:
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("", "Select BOOLEAN such that Calls (_, _)");
             //Assert
@@ -331,7 +343,7 @@ namespace StaticProgramAnalyzer.Tests
             //otherwise, the result is FALSE.:
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("stmt s;", "Select s such that Parent(s,7)");
             //Assert
@@ -344,7 +356,7 @@ namespace StaticProgramAnalyzer.Tests
             //otherwise, the result is FALSE.:
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("stmt s;", "Select s such that Parent(s,8)");
             //Assert
@@ -357,7 +369,7 @@ namespace StaticProgramAnalyzer.Tests
             //otherwise, the result is FALSE.:
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("stmt s;", "Select s such that Parent(s,9)");
             //Assert
@@ -370,7 +382,7 @@ namespace StaticProgramAnalyzer.Tests
             //otherwise, the result is FALSE.:
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("stmt s;", "Select s such that Parent(s,11)");
             //Assert
@@ -383,11 +395,110 @@ namespace StaticProgramAnalyzer.Tests
             //otherwise, the result is FALSE.:
             //Arrange
             var pkb = treeBuilder.GetPKB(tokens);
-            var processor = new QueryProcessor(pkb);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
             //Act
             var result = processor.ProcessQuery("stmt s;", "Select s such that Parent(s,12)");
             //Assert
             Assert.AreEqual("10", result);
+        }
+        [TestMethod]
+        public void StatementUsesX()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("stmt s;", "Select s such that Uses(s,\"x\")");
+            //Assert
+            Assert.AreEqual("3, 6, 7, 10, 11, 13, 15", result);
+        }
+        [TestMethod]
+        public void StatementUsesZ()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("stmt s;", "Select s such that Uses(s,\"z\")");
+            //Assert
+            Assert.AreEqual("3, 6, 8, 13, 14, 15, 17", result);
+        }
+        [TestMethod]
+        public void StatementUsesI()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("stmt s;", "Select s such that Uses(s,\"i\")");
+            //Assert
+            Assert.AreEqual("3, 6, 9, 13", result);
+        }
+        [TestMethod]
+        public void StatementUsesY()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("stmt s;", "Select s such that Uses(s,\"y\")");
+            //Assert
+            Assert.AreEqual("3, 6, 7, 15", result);
+        }
+        [TestMethod]
+        public void StatementModifiesX()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("stmt s;", "Select s such that Modifies(s,\"x\")");
+            //Assert
+            Assert.AreEqual("1, 3, 4, 6, 7, 10, 11, 15", result);
+        }
+        [TestMethod]
+        public void StatementModifiesY()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("stmt s;", "Select s such that Modifies(s,\"y\")");
+            //Assert
+            Assert.AreEqual("3, 14", result);
+        }
+        [TestMethod]
+        public void StatementModifiesZ()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("stmt s;", "Select s such that Modifies(s,\"z\")");
+            //Assert
+            Assert.AreEqual("2, 3, 6, 8, 10, 12, 13, 16", result);
+        }
+        [TestMethod]
+        public void StatementModifiesV()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("stmt s;", "Select s such that Modifies(s,\"v\")");
+            //Assert
+            Assert.AreEqual("3, 6, 8, 17", result);
+        }
+        [TestMethod]
+        public void StatementModifiesI()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("stmt s;", "Select s such that Modifies(s,\"i\")");
+            //Assert
+            Assert.AreEqual("3, 5, 6, 9", result);
         }
     }
 }

@@ -56,15 +56,5 @@ namespace StaticProgramAnalyzer.Tokens
         {
             return Source.LineNumber.ToString();
         }
-
-        //public override string ToString()
-        //{
-        //    var sb= new StringBuilder();
-        //    var assignNodeName= $"assign_{VariableName}_{FakeExpression.GetHashCode()}";
-        //    sb.AppendLine($"{assignNodeName}(assign)");
-        //    sb.AppendLine($"{assignNodeName} --> {assignNodeName}_{VariableName}({VariableName})");
-
-        //    return sb.ToString();
-        //}
     }
 }

@@ -30,21 +30,64 @@ namespace StaticProgramAnalyzer.TreeBuilding
                     procedures.Add(procedure);
                 }
             }
-            return new ProgramKnowledgeBase()
+            var result = new ProgramKnowledgeBase()
             {
                 ProceduresTree = procedures,
                 TokenList = procedures.Concat(procedures.SelectMany(p => p.GetDescentands())),
-                CallsDictionary = procedures.Select(p => new
+                CallsDirectly = procedures.Select(x => new
                 {
-                    procedureName = p.ProcedureName,
-                    calls = p.GetDescentands().OfType<CallToken>().Select(c => c.ProcedureName)
-                })
-                .SelectMany(p => p.calls.Select(c => new
-                {
-                    caller = p.procedureName,
-                    callee = c
-                })).ToDictionary(x => x.caller, x => x.callee)
+                    procedureName = x.ProcedureName,
+                    calls = x.GetDescentands().OfType<CallToken>().Select(c => c.ProcedureName).ToHashSet()
+                }).ToDictionary(x => x.procedureName, x => x.calls),
             };
+
+            var allCalls = GetAllCalls(result.CallsDirectly);
+            result.AllCalls = allCalls;
+            return result;
+        }
+
+        public Dictionary<string, HashSet<string>> GetAllCalls(Dictionary<string, HashSet<string>> callsDirectly)
+        {
+            Dictionary<string, HashSet<string>> allCalls = callsDirectly.ToDictionary(x => x.Key, x =>
+            {
+                var list = x.Value.ToHashSet();
+                foreach (var item in x.Value)
+                {
+                    if (callsDirectly.ContainsKey(item))
+                    {
+                        foreach (var newItem in callsDirectly[item])
+                        {
+                            list.Add(newItem);
+                        }
+                    }
+                }
+                return list;
+            });
+
+            bool anythingHasBeenAdded = true;
+            while (anythingHasBeenAdded)
+            {
+                anythingHasBeenAdded = false;
+                allCalls = allCalls.ToDictionary(x => x.Key, x =>
+                {
+                    var list = x.Value.ToHashSet();
+                    foreach (var item in x.Value)
+                    {
+                        if (allCalls.ContainsKey(item))
+                        {
+                            foreach (var newItem in allCalls[item])
+                            {
+                                if (list.Add(newItem))
+                                {
+                                    anythingHasBeenAdded = true;
+                                };
+                            }
+                        }
+                    }
+                    return list;
+                });
+            }
+            return allCalls;
         }
 
         public ProcedureToken BuildProcedure(Queue<ParserToken> tokenQueue)

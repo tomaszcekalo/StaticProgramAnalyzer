@@ -9,7 +9,7 @@ namespace StaticProgramAnalyzer.Tests
         public void GetProcedure()
         {
             //Arrange
-            var testedSystem = new QueryProcessor(null);
+            var testedSystem = new QueryProcessor(null,null);
             //Act
             var result = testedSystem.GetDeclarations("Procedure p;");
             //Assert
@@ -21,7 +21,7 @@ namespace StaticProgramAnalyzer.Tests
         public void GetProceduresTogether()
         {
             //Arrange
-            var testedSystem = new QueryProcessor(null);
+            var testedSystem = new QueryProcessor(null, null);
             //Act
             var result = testedSystem.GetDeclarations("Procedure p1, p2;");
             //Assert
@@ -34,7 +34,7 @@ namespace StaticProgramAnalyzer.Tests
         public void GetProceduresSeperate()
         {
             //Arrange
-            var testedSystem = new QueryProcessor(null);
+            var testedSystem = new QueryProcessor(null, null);
             //Act
             var result = testedSystem.GetDeclarations("Procedure p1;Procedure p2;");
             //Assert
@@ -47,7 +47,7 @@ namespace StaticProgramAnalyzer.Tests
         public void GetTypesGrouped()
         {
             //Arrange
-            var testedSystem = new QueryProcessor(null);
+            var testedSystem = new QueryProcessor(null, null);
             //Act
             var result = testedSystem.GetDeclarations("Procedure p1, p2;Assign a1, a2;");
             //Assert

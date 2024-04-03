@@ -30,5 +30,10 @@ namespace StaticProgramAnalyzer.Tokens
                 .Concat(Else)
                 .Concat(Else.SelectMany(e => e.GetDescentands()));
         }
+
+        public override string ToString()
+        {
+            return Source.LineNumber.ToString();
+        }
     }
 }
