@@ -79,7 +79,8 @@ namespace StaticProgramAnalyzer.Tokens
         }
         public override string ToString()
         {
-            return String.Format("{0}={1}", Left.VariableName, Right.Content);
+            //return String.Format("{0}={1}", Left.VariableName, Right.Content);
+            return StatementNumber.ToString();
         }
         /*
         internal void SetVariablesAndConstants()

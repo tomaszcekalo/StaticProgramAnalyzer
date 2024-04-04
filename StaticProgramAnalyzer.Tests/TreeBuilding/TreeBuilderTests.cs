@@ -44,7 +44,7 @@ y = a+((b+c*g)+d*e)*f+k+((b+c*g)+d*e)*f+k+((b+c*g)+d*e)*f+k+((b+c*g)+d*e)*f+k+((
 y = a+b*c;
 y = a+b;
 y = b+a;
-y = (a+b*c)*(e*d)*f;
+y = (a+b*c)*(e*d)*f+k;
 }";
             var parser = new Parser();
             var tokens = parser.Parse(testProgram.Split("\r\n"));
@@ -104,8 +104,8 @@ y = (a+b*c)*(e*d)*f;
             }
             QueryResultProjector qrp = new QueryResultProjector();
             QueryProcessor qp = new QueryProcessor(pkb, qrp);
-            String ret = qp.ProcessQuery("assign a1", "select a1 such that Uses(a1, a)");
-            int a = 1;
+            Assert.IsTrue(qp.ProcessQuery("stmt a1", "Select a1 such that Uses(a1, \"k\")")=="4");
+            Assert.IsFalse(qp.ProcessQuery("stmt a1", "Select a1 such that Uses(a1, \"k\")") == "1");
         }
 
     }
