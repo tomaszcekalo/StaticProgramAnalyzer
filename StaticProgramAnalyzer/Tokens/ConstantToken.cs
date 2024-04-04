@@ -8,11 +8,12 @@ namespace StaticProgramAnalyzer.Tokens
 {
     internal class ConstantToken : RefToken
     {
-        public int TestValue { get; set; }
+        public int Value { get; set; }
 
         public ConstantToken(string content) : base(content)
         {
             TestValue = int.Parse(content);
+            Value = int.Parse(content);
             UsesConstants.Add(content);
             FakeExpression = content;
         }

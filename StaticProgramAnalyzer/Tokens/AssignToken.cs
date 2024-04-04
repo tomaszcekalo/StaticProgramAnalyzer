@@ -14,7 +14,7 @@ namespace StaticProgramAnalyzer.Tokens
         internal HashSet<string> Modifies;
 
         public string FakeExpression { get; internal set; }
-        List<IToken> Variables { get; set; }
+        List<IToken> VariablesAndConstants { get; set; }
         public AssignToken(IToken parent, ParserToken source, int statementNumber) : base(parent, source, statementNumber)
         {
             /*
@@ -25,7 +25,6 @@ namespace StaticProgramAnalyzer.Tokens
                     Source = source
                 }
             };
-            
             FakeExpression = fakeExpression;
             StringBuilder sb = new StringBuilder();
             foreach (var c in fakeExpression)
@@ -51,12 +50,12 @@ namespace StaticProgramAnalyzer.Tokens
         }
         public override IEnumerable<IToken> GetChildren()
         {
-            return Variables;
+            return VariablesAndConstants;
         }
 
         public override IEnumerable<IToken> GetDescentands()
         {
-            return Variables;
+            return VariablesAndConstants;
         }
         //checks if provided tree exists in the assigment tree
         public bool ContainsTree(AssignToken checkTree)

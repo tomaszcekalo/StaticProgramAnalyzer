@@ -38,7 +38,7 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
             var result = new ProgramKnowledgeBase()
             {
                 ProceduresTree = procedures,
-                TokenList = procedures.Concat(procedures.SelectMany(p => p.GetDescentands())),
+                TokenList = procedures.Concat(procedures.SelectMany(p => p.GetDescentands())).OrderBy(x=>x.Source.LineNumber),
                 CallsDirectly = procedures.Select(x => new
                 {
                     procedureName = x.ProcedureName,
@@ -48,7 +48,6 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
 
             var allCalls = GetAllCalls(result.CallsDirectly);
             result.AllCalls = allCalls;
-            var statements = result.TokenList.OfType<StatementToken>().OrderBy(x => x.StatementNumber).ToList();
             return result;
         }
 

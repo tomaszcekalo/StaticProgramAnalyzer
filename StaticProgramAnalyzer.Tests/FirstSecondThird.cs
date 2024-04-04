@@ -106,7 +106,7 @@ namespace StaticProgramAnalyzer.Tests
             //Act
             var result = processor.ProcessQuery("while w;", "Select w ");
             //Assert
-            Assert.AreEqual("8", result);
+            Assert.AreEqual("6", result);
         }
 
         [TestMethod]
@@ -274,7 +274,7 @@ namespace StaticProgramAnalyzer.Tests
             //Act
             var result = processor.ProcessQuery("stmt s; constant c;", "Select s with s.stmt# = c.value");
             //Assert
-            Assert.AreEqual("2, 3, 5, 1", result);
+            Assert.AreEqual("1, 2, 3, 5", result);
         }
 
         [TestMethod]

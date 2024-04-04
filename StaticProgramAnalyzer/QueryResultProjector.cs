@@ -34,6 +34,10 @@ namespace StaticProgramAnalyzer
             }
             // build strings (variables, or variable tuples)
             var outputs = output.Select(x => x.sb.ToString()).Distinct();
+            if(outputs.All(x=> int.TryParse(x, out _)))
+            {
+                outputs = outputs.OrderBy(x => int.Parse(x));
+            }
             // join all of them together
             var resultString = string.Join(", ", outputs);
 
