@@ -7,10 +7,11 @@ namespace StaticProgramAnalyzer.Tokens
 {
     public abstract class StatementToken : IToken
     {
-        public StatementToken(IToken parent, ParserToken source)
+        public StatementToken(IToken parent, ParserToken source, int statementNumber)
         {
             this.Parent = parent;
             Source = source;
+            StatementNumber = statementNumber;
         }
 
 

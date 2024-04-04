@@ -4,11 +4,13 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Text;
 
 namespace StaticProgramAnalyzer.KnowledgeBuilding
 {
     public class KnowledgeBuilder
     {
+        int _statementCounter = 0;
         public KnowledgeBuilder(Parser parser)
         {
             Parser = parser;
@@ -43,11 +45,7 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
 
             var allCalls = GetAllCalls(result.CallsDirectly);
             result.AllCalls = allCalls;
-            int i = 1;
-            foreach (var item in result.TokenList.OfType<StatementToken>())
-            {
-                item.StatementNumber = i++;
-            }
+            var statements = result.TokenList.OfType<StatementToken>().OrderBy(x => x.StatementNumber).ToList();
             return result;
         }
 
@@ -168,16 +166,14 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
             }
             // TODO: Build expression
             var fakeExpression = string.Join(" ", tokens.Select(t => t.Content));
-            AssignToken assignToken = new(parent, leftHandToken, fakeExpression)
-            {
-            };
+            AssignToken assignToken = new(parent, leftHandToken, fakeExpression, ++_statementCounter);
             return assignToken;
         }
 
         public StatementToken BuildProcedureCall(IToken parent, Queue<ParserToken> tokenQueue)
         {
             var token = tokenQueue.Dequeue();
-            CallToken callToken = new(parent, token);
+            CallToken callToken = new(parent, token, ++_statementCounter);
             CheckIfValidName(token.Content);
 
             callToken.ProcedureName = token.Content;
@@ -188,7 +184,7 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
 
         public StatementToken BuildWhileStatement(ParserToken source, IToken parent, Queue<ParserToken> tokenQueue)
         {
-            WhileToken whileToken = new(parent, source);
+            WhileToken whileToken = new(parent, source, ++_statementCounter);
             ParserToken token = tokenQueue.Dequeue();
             CheckIfValidName(token.Content);
             whileToken.VariableName = token.Content;
@@ -201,7 +197,7 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
         public StatementToken BuildIfStatement(IToken parent, Queue<ParserToken> tokenQueue)
         {
             ParserToken token = tokenQueue.Dequeue();
-            IfThenElseToken ifToken = new(parent, token);
+            IfThenElseToken ifToken = new(parent, token, ++_statementCounter);
             CheckIfValidName(token.Content);
             ifToken.VariableName = token.Content;
             token = tokenQueue.Dequeue();

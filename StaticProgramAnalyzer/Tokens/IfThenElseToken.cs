@@ -8,7 +8,7 @@ namespace StaticProgramAnalyzer.Tokens
 {
     internal class IfThenElseToken : StatementToken
     {
-        public IfThenElseToken(IToken parent, ParserToken source) : base(parent, source)
+        public IfThenElseToken(IToken parent, ParserToken source, int statementNumber) : base(parent, source, statementNumber)
         {
         }
 

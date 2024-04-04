@@ -4,9 +4,9 @@ using System.Linq;
 
 namespace StaticProgramAnalyzer.Tokens
 {
-    internal class WhileToken : StatementToken
+    public class WhileToken : StatementToken
     {
-        public WhileToken(IToken parent, ParserToken source) : base(parent, source)
+        public WhileToken(IToken parent, ParserToken source, int statementNumber) : base(parent, source, statementNumber)
         {
         }
 

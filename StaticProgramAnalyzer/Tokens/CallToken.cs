@@ -7,7 +7,7 @@ namespace StaticProgramAnalyzer.Tokens
 {
     public class CallToken : StatementToken, IHasProcedureName
     {
-        public CallToken(IToken parent, ParserToken source) : base(parent, source)
+        public CallToken(IToken parent, ParserToken source, int statementNumber) : base(parent, source, statementNumber)
         {
         }
 

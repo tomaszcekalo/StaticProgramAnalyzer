@@ -7,7 +7,7 @@ namespace StaticProgramAnalyzer.Tokens
 {
     public class AssignToken : StatementToken
     {
-        public AssignToken(IToken parent, ParserToken source, string fakeExpression) : base(parent, source)
+        public AssignToken(IToken parent, ParserToken source, string fakeExpression, int statementNumber) : base(parent, source, statementNumber)
         {
             Variables= new List<IToken>()
             {
