@@ -120,6 +120,8 @@ namespace StaticProgramAnalyzer.QueryProcessing
             {
                 var lineNumber = int.Parse(array[1].Trim());
                 return combinations.Where(x => x[pqlVar].Source.LineNumber == lineNumber);
+                //var statementNumber = int.Parse(array[1].Trim());
+                //return combinations.Where(x => (x[pqlVar] as StatementToken)?.StatementNumber == statementNumber);
             }
             if (pqlProperty == "varName")
             {
@@ -186,7 +188,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
                             && x.Parent == c[left]);
                 }).ToList();
             }
-            left=left.Trim();
+            left =left.Trim();
             right = right.Trim();
             return combinations.Where(x =>
             {

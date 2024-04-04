@@ -52,9 +52,5 @@ namespace StaticProgramAnalyzer.Tokens
         {
             return Variables;
         }
-        public override string ToString()
-        {
-            return Source.LineNumber.ToString();
-        }
     }
 }

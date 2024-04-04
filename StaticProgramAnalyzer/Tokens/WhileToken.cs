@@ -23,9 +23,5 @@ namespace StaticProgramAnalyzer.Tokens
             return StatementList.Concat(
                 StatementList.SelectMany(x => x.GetDescentands()));
         }
-        public override string ToString()
-        {
-            return Source.LineNumber.ToString();
-        }
     }
 }

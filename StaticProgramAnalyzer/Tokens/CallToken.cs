@@ -22,9 +22,5 @@ namespace StaticProgramAnalyzer.Tokens
         {
             return new List<IToken>();
         }
-        public override string ToString()
-        {
-            return Source.LineNumber.ToString();
-        }
     }
 }

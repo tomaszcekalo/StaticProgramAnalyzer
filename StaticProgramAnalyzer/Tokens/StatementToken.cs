@@ -20,5 +20,11 @@ namespace StaticProgramAnalyzer.Tokens
 
         public IToken Parent { get; }
         public ParserToken Source { get; set; }
+        public int StatementNumber { get; set; }
+        public override string ToString()
+        {
+            //return StatementNumber.ToString();
+            return Source.LineNumber.ToString();
+        }
     }
 }

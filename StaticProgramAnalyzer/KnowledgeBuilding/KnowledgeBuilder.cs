@@ -43,6 +43,11 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
 
             var allCalls = GetAllCalls(result.CallsDirectly);
             result.AllCalls = allCalls;
+            int i = 1;
+            foreach (var item in result.TokenList.OfType<StatementToken>())
+            {
+                item.StatementNumber = i++;
+            }
             return result;
         }
 
