@@ -15,10 +15,9 @@ namespace StaticProgramAnalyzer.Tokens
 
         public string FakeExpression { get; internal set; }
         List<IToken> VariablesAndConstants { get; set; }
-        public AssignToken(IToken parent, ParserToken source, int statementNumber) : base(parent, source, statementNumber)
+        public AssignToken(IToken parent, ParserToken source, string fakeExpression, int statementNumber) : base(parent, source, statementNumber)
         {
-            /*
-            Variables= new List<IToken>()
+            VariablesAndConstants = new List<IToken>()
             {
                 new ModifyVariableToken(this, source.Content)
                 {
@@ -29,24 +28,35 @@ namespace StaticProgramAnalyzer.Tokens
             StringBuilder sb = new StringBuilder();
             foreach (var c in fakeExpression)
             {
-                if (char.IsLetter(c))
+                if (char.IsLetter(c) || char.IsDigit(c))
                 {
                     sb.Append(c);
                 }
-                
                 else
                 {
                     if (sb.Length > 0)
                     {
-                        Variables.Add(new UseVariableToken(this, sb.ToString())
+                        var text = sb.ToString();
+                        if (int.TryParse(text, out var result))
                         {
-                            Source = source
-                        });
+                            VariablesAndConstants.Add(new ConstantToken(text)
+                            {
+                                Value = result,
+                                Parent = this,
+                                Source = source
+                            });
+                        }
+                        else
+                        {
+                            VariablesAndConstants.Add(new UseVariableToken(this, sb.ToString())
+                            {
+                                Source = source
+                            });
+                        }
                     }
                     sb.Clear();
                 }
             }
-            */
         }
         public override IEnumerable<IToken> GetChildren()
         {
@@ -71,5 +81,24 @@ namespace StaticProgramAnalyzer.Tokens
         {
             return String.Format("{0}={1}", Left.VariableName, Right.Content);
         }
+        /*
+        internal void SetVariablesAndConstants()
+        {
+            VariablesAndConstants.Add()
+            foreach (var c in UsesConstants){
+                VariablesAndConstants.Add(new UseVariableToken(this, c)
+                {
+                    Source = this.Source
+                });
+            }
+            foreach (var c in UsesVariables)
+            {
+                VariablesAndConstants.Add(new UseVariableToken(this, c)
+                {
+                    Source = this.Source
+                });
+            }
+        }
+        */
     }
 }

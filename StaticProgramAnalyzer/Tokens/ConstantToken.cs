@@ -15,7 +15,6 @@ namespace StaticProgramAnalyzer.Tokens
             TestValue = int.Parse(content);
             Value = int.Parse(content);
             UsesConstants.Add(content);
-            FakeExpression = content;
         }
     }
     

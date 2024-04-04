@@ -50,7 +50,7 @@ y = (a+b*c)*(e*d)*f;
             var tokens = parser.Parse(testProgram.Split("\r\n"));
             var tb = new KnowledgeBuilder(parser);
             var pkb = tb.GetPKB(tokens);
-            var assigmentList = pkb.ProceduresTree[0].AssigmentList;
+            var assigmentList = pkb.ProceduresTree[0].StatementList.OfType<AssignToken>().ToList();
         
         List<AssigmentCheck> assigmentChecks = new List<AssigmentCheck>()
             {
@@ -104,7 +104,7 @@ y = (a+b*c)*(e*d)*f;
             }
             QueryResultProjector qrp = new QueryResultProjector();
             QueryProcessor qp = new QueryProcessor(pkb, qrp);
-            String ret = qp.ProcessQuery("assigment a", "select a such that Uses(a, \"a\")");
+            String ret = qp.ProcessQuery("assign a1", "select a1 such that Uses(a1, a)");
             int a = 1;
         }
 

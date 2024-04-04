@@ -212,16 +212,16 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
             var fakeExpression = string.Join(" ", tokens.Select(t => t.Content));
 
 
-            AssignToken assignToken = new(parent, leftHandToken, ++_statementCounter);
+            AssignToken assignToken = new(parent, leftHandToken, fakeExpression, ++_statementCounter);
             assignToken.Left = new ModifyVariableToken(assignToken, leftHandToken.Content);
-            
             assignToken.Right = BuildExpressionToken(tokens).expresionToken;
             assignToken.Modifies = assignToken.Left.UsesVariables;
             assignToken.UsesVariables = assignToken.Right.UsesVariables;
             assignToken.UsesConstants = assignToken.Right.UsesConstants;
             assignToken.Right.Parent = assignToken;
             assignToken.Left.Parent = assignToken;
-            
+            //assignToken.SetVariablesAndConstants();
+
             //assignToken.FakeExpression = string.Join(" ", tokens.Select(t => t.refToken.Content + " " + t.operatorToken.Content));
             return assignToken;
         }
