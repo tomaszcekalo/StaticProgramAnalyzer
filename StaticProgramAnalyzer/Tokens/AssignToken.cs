@@ -9,7 +9,7 @@ namespace StaticProgramAnalyzer.Tokens
     {
         public AssignToken(IToken parent, ParserToken source, string fakeExpression, int statementNumber) : base(parent, source, statementNumber)
         {
-            Variables= new List<IToken>()
+            VariablesAndConstants= new List<IToken>()
             {
                 new ModifyVariableToken(this, source.Content)
                 {
@@ -20,19 +20,31 @@ namespace StaticProgramAnalyzer.Tokens
             StringBuilder sb = new StringBuilder();
             foreach (var c in fakeExpression)
             {
-                if (char.IsLetter(c))
+                if (char.IsLetter(c) || char.IsDigit(c))
                 {
                     sb.Append(c);
                 }
-                
                 else
                 {
                     if (sb.Length > 0)
                     {
-                        Variables.Add(new UseVariableToken(this, sb.ToString())
+                        var text = sb.ToString();
+                        if(int.TryParse(text, out var result))
                         {
-                            Source = source
-                        });
+                            VariablesAndConstants.Add(new ConstantToken()
+                            {
+                                Value = result,
+                                Parent=this,
+                                Source=source
+                            });
+                        }
+                        else
+                        {
+                            VariablesAndConstants.Add(new UseVariableToken(this, sb.ToString())
+                            {
+                                Source = source
+                            });
+                        }
                     }
                     sb.Clear();
                 }
@@ -41,16 +53,16 @@ namespace StaticProgramAnalyzer.Tokens
 
         public string VariableName { get; internal set; }
         public string FakeExpression { get; internal set; }
-        List<IToken> Variables { get; set; }
+        List<IToken> VariablesAndConstants { get; set; }
 
         public override IEnumerable<IToken> GetChildren()
         {
-            return Variables;
+            return VariablesAndConstants;
         }
 
         public override IEnumerable<IToken> GetDescentands()
         {
-            return Variables;
+            return VariablesAndConstants;
         }
     }
 }

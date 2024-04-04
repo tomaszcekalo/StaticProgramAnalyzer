@@ -103,35 +103,46 @@ namespace StaticProgramAnalyzer.QueryProcessing
         public IEnumerable<Dictionary<string, IToken>> FilterByParameter(IEnumerable<Dictionary<string, IToken>> combinations, string condition)
         {
             var array = condition.Split('=');
-            var leftArray = array[0].Split('.', StringSplitOptions.RemoveEmptyEntries);
-            var pqlVar = leftArray[0].Trim();
-            var pqlProperty = leftArray[1].Trim();
-            var value = array[1].Trim().Replace("\"", "");// TODO we probably want to compare with other parameters
+
+            return combinations.Where(x=> GetValueOrProperty(array[0], x) == GetValueOrProperty(array[1], x));
+        }
+
+        public string GetValueOrProperty(string selector, Dictionary<string, IToken> x)
+        {
+            selector=selector.Trim();
+            if(int.TryParse(selector, out int result))
+            {
+                return result.ToString();
+            }
+            if(selector.StartsWith("\"") && selector.EndsWith("\""))
+            {
+                return selector.Replace("\"", "");
+            }
+            var array = selector.Split('.');
+            var pqlVar = array[0].Trim();
+            var pqlProperty = array[1].Trim();
 
             if (pqlProperty == "procName")
             {
-                return combinations.Where(x =>
-                {
                     var withProcname = x[pqlVar] as IHasProcedureName;
-                    return withProcname?.ProcedureName == value.Trim();
-                });
+                    return withProcname?.ProcedureName;
             }
             if (pqlProperty == "stmt#")
             {
-                var lineNumber = int.Parse(array[1].Trim());
-                return combinations.Where(x => x[pqlVar].Source.LineNumber == lineNumber);
-                //var statementNumber = int.Parse(array[1].Trim());
-                //return combinations.Where(x => (x[pqlVar] as StatementToken)?.StatementNumber == statementNumber);
+                return  (x[pqlVar] as StatementToken)?.StatementNumber.ToString();
             }
             if (pqlProperty == "varName")
             {
-                return combinations.Where(x =>
-                {
                     var withVarName = x[pqlVar] as VariableToken;
-                    return withVarName?.VariableName == array[1].Trim();
-                });
+                    return withVarName?.VariableName;
+                
             }
-            return combinations;// todo throw exception?
+            if (pqlProperty == "value")
+            {
+                    var withValue = x[pqlVar] as ConstantToken;
+                    return withValue?.Value.ToString() ;
+            }
+            throw new Exception("invalid property");
         }
 
         public IEnumerable<Dictionary<string, IToken>> FilterByCondition(
@@ -177,14 +188,14 @@ namespace StaticProgramAnalyzer.QueryProcessing
         private IEnumerable<Dictionary<string, IToken>> ParentStar(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
         {
             //if second parameter is a line number
-            if (int.TryParse(right, out int lineNumber))
+            if (int.TryParse(right, out int statementNumber))
             {
                 //parents of statements at that line number
                 return combinations.Where(c =>
                 {
                     var children = c[left].GetDescentands();
-                    return children
-                        .Any(x => x.Source.LineNumber == lineNumber
+                    return children.OfType<StatementToken>()
+                        .Any(x => x.StatementNumber == statementNumber
                             && x.Parent == c[left]);
                 }).ToList();
             }
@@ -228,6 +239,10 @@ namespace StaticProgramAnalyzer.QueryProcessing
 
         private ProcedureToken GetFinalParent(IToken x, string left)
         {
+            if(x.Parent is null && x is ProcedureToken)
+            {
+                return x as ProcedureToken;
+            }
             if(x.Parent is ProcedureToken)
             {
                 return x.Parent as ProcedureToken;
@@ -238,7 +253,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
         private IEnumerable<Dictionary<string, IToken>> Uses(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
         {
             right = right.Trim().Replace("\"","");
-            return combinations.Where(x =>
+            var uses = combinations.Where(x =>
             {
                 var leftToken = x[left.Trim()];
                 var descendantsThatUse = leftToken.GetDescentands()
@@ -246,6 +261,28 @@ namespace StaticProgramAnalyzer.QueryProcessing
                 return descendantsThatUse
                     .Any(use => use.VariableName == right);
             }).ToList();
+
+            var usesProcedures = uses
+                .Select(x => x[left])
+                .Select(x => GetFinalParent(x, left).ProcedureName)
+                .ToList();
+            var calls = combinations.Where(x => x[left] is CallToken)
+                .Where(x => usesProcedures.Contains((x[left] as CallToken).ProcedureName));
+
+            return uses.Concat(calls);
+
+
+            //var usesProcedures = uses
+            //    .Select(x => x[left])
+            //    .Select(x => GetFinalParent(x, left).ProcedureName)
+            //    .ToList();
+            //var callingProcedures = _pkb.AllCalls
+            //    .Where(x => x.Value.Any(y => usesProcedures.Contains(y)))
+            //    .Select(x => x.Key);
+            //var calls = combinations.Where(x => x[left] is CallToken)
+            //    .Where(x => callingProcedures.Contains((x[left] as CallToken).ProcedureName));
+
+            //return uses.Concat(calls);
         }
 
         public IEnumerable<Dictionary<string, IToken>> Parent(
@@ -258,8 +295,8 @@ namespace StaticProgramAnalyzer.QueryProcessing
                 return combinations.Where(c =>
                 {
                     var children = c[left].GetChildren();
-                    return children
-                        .Any(x => x.Source.LineNumber == lineNumber
+                    return children.OfType<StatementToken>()
+                        .Any(x => x.StatementNumber == lineNumber
                             && x.Parent == c[left]);
                 }).ToList();
             }
@@ -371,6 +408,10 @@ namespace StaticProgramAnalyzer.QueryProcessing
             else if (type == "while")
             {
                 return new IsWhilePredicate();
+            }
+            else if (type == "constant")
+            {
+                return new IsConstantPredicate();
             }
             return null;// TODO : throw exception or choose what to do
         }

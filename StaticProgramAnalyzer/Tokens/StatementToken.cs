@@ -24,8 +24,8 @@ namespace StaticProgramAnalyzer.Tokens
         public int StatementNumber { get; set; }
         public override string ToString()
         {
-            //return StatementNumber.ToString();
-            return Source.LineNumber.ToString();
+            return StatementNumber.ToString();
+            //return Source.LineNumber.ToString();
         }
     }
 }

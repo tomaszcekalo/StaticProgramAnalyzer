@@ -9,7 +9,7 @@ namespace StaticProgramAnalyzer.Tokens
     {
 
         public int Value { get; set; }
-        public IToken Parent { get; }
+        public IToken Parent { get; set; }
         public ParserToken Source { get; set; }
 
         public IEnumerable<IToken> GetDescentands()
