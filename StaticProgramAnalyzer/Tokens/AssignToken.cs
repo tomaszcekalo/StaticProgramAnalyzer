@@ -7,27 +7,56 @@ namespace StaticProgramAnalyzer.Tokens
 {
     public class AssignToken : StatementToken
     {
-        public AssignToken(IToken parent) : base(parent)
-        {
-        }
-
-        public VariableToken Left;
+        public ModifyVariableToken Left;
         public ExpressionToken Right;
-        internal HashSet<string> Modifies;
         internal HashSet<string> UsesConstants;
         internal HashSet<string> UsesVariables;
-        internal int LineNumber;
+        internal HashSet<string> Modifies;
 
-        public string VariableName { get; internal set; }
         public string FakeExpression { get; internal set; }
-
+        List<IToken> Variables { get; set; }
+        public AssignToken(IToken parent, ParserToken source, int statementNumber) : base(parent, source, statementNumber)
+        {
+            /*
+            Variables= new List<IToken>()
+            {
+                new ModifyVariableToken(this, source.Content)
+                {
+                    Source = source
+                }
+            };
+            
+            FakeExpression = fakeExpression;
+            StringBuilder sb = new StringBuilder();
+            foreach (var c in fakeExpression)
+            {
+                if (char.IsLetter(c))
+                {
+                    sb.Append(c);
+                }
+                
+                else
+                {
+                    if (sb.Length > 0)
+                    {
+                        Variables.Add(new UseVariableToken(this, sb.ToString())
+                        {
+                            Source = source
+                        });
+                    }
+                    sb.Clear();
+                }
+            }
+            */
+        }
         public override IEnumerable<IToken> GetChildren()
         {
-            return new List<IToken>();
+            return Variables;
         }
-        public override string ToString()
+
+        public override IEnumerable<IToken> GetDescentands()
         {
-            return String.Format("{0}={1}",VariableName, Right.Content);
+            return Variables;
         }
         //checks if provided tree exists in the assigment tree
         public bool ContainsTree(AssignToken checkTree)
@@ -39,15 +68,9 @@ namespace StaticProgramAnalyzer.Tokens
         {
             return Right.Content.Equals(checkTree.Right.Content);
         }
-
-        //public override string ToString()
-        //{
-        //    var sb= new StringBuilder();
-        //    var assignNodeName= $"assign_{VariableName}_{FakeExpression.GetHashCode()}";
-        //    sb.AppendLine($"{assignNodeName}(assign)");
-        //    sb.AppendLine($"{assignNodeName} --> {assignNodeName}_{VariableName}({VariableName})");
-
-        //    return sb.ToString();
-        //}
+        public override string ToString()
+        {
+            return String.Format("{0}={1}", Left.VariableName, Right.Content);
+        }
     }
 }

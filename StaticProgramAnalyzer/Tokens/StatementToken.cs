@@ -1,4 +1,5 @@
-﻿using System;
+﻿using StaticProgramAnalyzer.Parsing;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -6,13 +7,25 @@ namespace StaticProgramAnalyzer.Tokens
 {
     public abstract class StatementToken : IToken
     {
-        public StatementToken(IToken parent)
+        public StatementToken(IToken parent, ParserToken source, int statementNumber)
         {
-            Parent = parent;
+            this.Parent = parent;
+            Source = source;
+            StatementNumber = statementNumber;
         }
 
-        public IToken Parent { get; }
+
+        public abstract IEnumerable<IToken> GetDescentands();
 
         public abstract IEnumerable<IToken> GetChildren();
+
+        public IToken Parent { get; set; }
+        public ParserToken Source { get; set; }
+        public int StatementNumber { get; set; }
+        public override string ToString()
+        {
+            //return StatementNumber.ToString();
+            return Source.LineNumber.ToString();
+        }
     }
 }

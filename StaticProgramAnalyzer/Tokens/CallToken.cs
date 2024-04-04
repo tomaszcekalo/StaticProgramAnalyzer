@@ -1,18 +1,24 @@
-﻿using System;
+﻿using StaticProgramAnalyzer.Parsing;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
 namespace StaticProgramAnalyzer.Tokens
 {
-    public class CallToken : StatementToken
+    public class CallToken : StatementToken, IHasProcedureName
     {
-        public CallToken(IToken parent) : base(parent)
+        public CallToken(IToken parent, ParserToken source, int statementNumber) : base(parent, source, statementNumber)
         {
         }
 
-        public string ProcedureName { get; internal set; }
+        public string ProcedureName { get; set; }
 
         public override IEnumerable<IToken> GetChildren()
+        {
+            return new List<IToken>();
+        }
+
+        public override IEnumerable<IToken> GetDescentands()
         {
             return new List<IToken>();
         }

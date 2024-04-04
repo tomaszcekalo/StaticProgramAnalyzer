@@ -7,19 +7,21 @@ using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Runtime.ExceptionServices;
+using System.Text;
 
-namespace StaticProgramAnalyzer.TreeBuilding
+namespace StaticProgramAnalyzer.KnowledgeBuilding
 {
-    public class TreeBuilder
+    public class KnowledgeBuilder
     {
-        public TreeBuilder(Parser parser)
+        int _statementCounter = 0;
+        public KnowledgeBuilder(Parser parser)
         {
             Parser = parser;
         }
 
         public Parser Parser { get; }
 
-        public ProgramKnowledgeBase GetProcedures(List<ParserToken> tokens)
+        public ProgramKnowledgeBase GetPKB(List<ParserToken> tokens)
         {
             Queue<ParserToken> tokenQueue = new Queue<ParserToken>(tokens);
             List<ProcedureToken> procedures = new List<ProcedureToken>();
@@ -33,23 +35,80 @@ namespace StaticProgramAnalyzer.TreeBuilding
                     procedures.Add(procedure);
                 }
             }
-            return new ProgramKnowledgeBase()
+            var result = new ProgramKnowledgeBase()
             {
                 ProceduresTree = procedures,
-                TokenList = procedures.SelectMany(p => p.GetChildren())
+                TokenList = procedures.Concat(procedures.SelectMany(p => p.GetDescentands())),
+                CallsDirectly = procedures.Select(x => new
+                {
+                    procedureName = x.ProcedureName,
+                    calls = x.GetDescentands().OfType<CallToken>().Select(c => c.ProcedureName).ToHashSet()
+                }).ToDictionary(x => x.procedureName, x => x.calls),
             };
+
+            var allCalls = GetAllCalls(result.CallsDirectly);
+            result.AllCalls = allCalls;
+            var statements = result.TokenList.OfType<StatementToken>().OrderBy(x => x.StatementNumber).ToList();
+            return result;
+        }
+
+        public Dictionary<string, HashSet<string>> GetAllCalls(Dictionary<string, HashSet<string>> callsDirectly)
+        {
+            Dictionary<string, HashSet<string>> allCalls = callsDirectly.ToDictionary(x => x.Key, x =>
+            {
+                var list = x.Value.ToHashSet();
+                foreach (var item in x.Value)
+                {
+                    if (callsDirectly.ContainsKey(item))
+                    {
+                        foreach (var newItem in callsDirectly[item])
+                        {
+                            list.Add(newItem);
+                        }
+                    }
+                }
+                return list;
+            });
+
+            bool anythingHasBeenAdded = true;
+            while (anythingHasBeenAdded)
+            {
+                anythingHasBeenAdded = false;
+                allCalls = allCalls.ToDictionary(x => x.Key, x =>
+                {
+                    var list = x.Value.ToHashSet();
+                    foreach (var item in x.Value)
+                    {
+                        if (allCalls.ContainsKey(item))
+                        {
+                            foreach (var newItem in allCalls[item])
+                            {
+                                if (list.Add(newItem))
+                                {
+                                    anythingHasBeenAdded = true;
+                                };
+                            }
+                        }
+                    }
+                    return list;
+                });
+            }
+            return allCalls;
         }
 
         public ProcedureToken BuildProcedure(Queue<ParserToken> tokenQueue)
         {
-            ProcedureToken procedure = new ProcedureToken();
             ParserToken token = tokenQueue.Dequeue();
+            ProcedureToken procedure = new ProcedureToken()
+            {
+                Source = token
+            };
             CheckIfValidName(token.Content);
-            procedure.Name = token.Content;
+            procedure.ProcedureName = token.Content;
             token = tokenQueue.Dequeue();
             Contract.Assert(token.Content == "{");
             procedure.StatementList = GetStatementList(procedure, tokenQueue);
-            procedure.AssigmentList = procedure.StatementList.OfType<AssignToken>().ToList();
+            //procedure.AssigmentList = procedure.StatementList.OfType<AssignToken>().ToList();
 
             return procedure;
         }
@@ -89,7 +148,7 @@ namespace StaticProgramAnalyzer.TreeBuilding
                 }
                 else if (tokenQueue.Peek().Content == "=")
                 {
-                    result.Add(this.BuildAssignmentStatement(parent, token.Content, tokenQueue));
+                    result.Add(this.BuildAssignmentStatement(parent, token, tokenQueue));
                 }
                 else
                 {
@@ -124,21 +183,45 @@ namespace StaticProgramAnalyzer.TreeBuilding
                 this.operatorToken = operatorToken;
                 operatorPriority = ExpresionTokenPriority.operatorPriorityDict[operatorToken.Content];
             }
-
         }
-        public StatementToken BuildAssignmentStatement(IToken parent, string variableName, Queue<ParserToken> tokenQueue)
+
+        public StatementToken BuildAssignmentStatement(IToken parent, ParserToken leftHandToken, Queue<ParserToken> tokenQueue)
         {
-            AssignToken assignToken = new(parent);
-            CheckIfValidName(variableName);
-            assignToken.Left = new VariableToken(variableName);
-            assignToken.VariableName = assignToken.Left.Content;
-            var eq = tokenQueue.Dequeue(); //deque equals sign 
-            assignToken.LineNumber = eq.LineNumber;
+                /*
+                CheckIfValidName(leftHandToken.Content);
+                List<ParserToken> tokens = new();
+                ParserToken token = tokenQueue.Dequeue();
+                while (tokenQueue.Count > 0 && token.Content != ";")
+                {
+                    token = tokenQueue.Dequeue();
+                    tokens.Add(token);
+                }
+                // TODO: Build expression
+                var fakeExpression = string.Join(" ", tokens.Select(t => t.Content));
+                AssignToken assignToken = new(parent, leftHandToken, fakeExpression, ++_statementCounter);
+                return assignToken;
+                */
+            CheckIfValidName(leftHandToken.Content);
+            Queue<ParserToken> tokens = new();
+            ParserToken token = tokenQueue.Dequeue();
+            while (tokenQueue.Count > 0 && token.Content != ";")
+            {
+                token = tokenQueue.Dequeue();
+                tokens.Enqueue(token);
+            }
+            // TODO: Build expression
+            var fakeExpression = string.Join(" ", tokens.Select(t => t.Content));
+
+
+            AssignToken assignToken = new(parent, leftHandToken, ++_statementCounter);
+            assignToken.Left = new ModifyVariableToken(assignToken, leftHandToken.Content);
             
-            assignToken.Right = BuildExpressionToken(tokenQueue).expresionToken;
+            assignToken.Right = BuildExpressionToken(tokens).expresionToken;
             assignToken.Modifies = assignToken.Left.UsesVariables;
             assignToken.UsesVariables = assignToken.Right.UsesVariables;
             assignToken.UsesConstants = assignToken.Right.UsesConstants;
+            assignToken.Right.Parent = assignToken;
+            assignToken.Left.Parent = assignToken;
             
             //assignToken.FakeExpression = string.Join(" ", tokens.Select(t => t.refToken.Content + " " + t.operatorToken.Content));
             return assignToken;
@@ -189,7 +272,8 @@ namespace StaticProgramAnalyzer.TreeBuilding
                 if (operatorToken.Content == ")" || operatorToken.Content == ";")
                 {
                     var epo = BuildExpressionByOperatorToken(leftToken.operatorToken.Content, leftToken.expresionToken, rightToken.expresionToken);
-                    return new ExpresionTokenPriority(epo, rightToken.operatorToken);
+                    var ret = new ExpresionTokenPriority(epo, rightToken.operatorToken);
+                    return ret;
                 }
                 if (leftToken.operatorPriority > rightToken.operatorPriority)
                 {
@@ -222,13 +306,10 @@ namespace StaticProgramAnalyzer.TreeBuilding
             {
                 case "+":
                     return BuildPlusToken(leftExpr, rightExpr);
-                    break;
                 case "-":
                     return BuildMinusToken(leftExpr, rightExpr);
-                    break;
                 case "*":
                     return BuildTimesToken(leftExpr, rightExpr);
-                    break;
                 default:
                     throw new Exception("Not supported operator");
             }
@@ -239,7 +320,7 @@ namespace StaticProgramAnalyzer.TreeBuilding
             if (IsConstant(token.Content)) {
                 return new ConstantToken(token.Content);
             } else {
-                return new VariableToken(token.Content, GetTestValue(token.Content));
+                return new VariableToken(null, token.Content, GetTestValue(token.Content));
             }
         }
         Int64 GetTestValue(String variableName)
@@ -257,6 +338,8 @@ namespace StaticProgramAnalyzer.TreeBuilding
             var expr = new PlusToken(String.Format("<+,{0},{1}>", leftToken.Content, rightToken.Content));
             expr.Left = leftToken;
             expr.Right = rightToken;
+            expr.Left.Parent = expr;
+            expr.Right.Parent = expr;
             expr.TestValue = leftToken.TestValue + rightToken.TestValue;
             expr.UsesVariables.UnionWith(leftToken.UsesVariables);
             expr.UsesVariables.UnionWith(rightToken.UsesVariables);
@@ -269,6 +352,8 @@ namespace StaticProgramAnalyzer.TreeBuilding
             var expr = new MinusToken(String.Format("<-,{0},{1}>", leftToken.Content, rightToken.Content));
             expr.Left = leftToken;
             expr.Right = rightToken;
+            expr.Left.Parent = expr;
+            expr.Right.Parent = expr;
             expr.TestValue = leftToken.TestValue - rightToken.TestValue;
             expr.UsesVariables.UnionWith(leftToken.UsesVariables);
             expr.UsesVariables.UnionWith(rightToken.UsesVariables);
@@ -281,6 +366,8 @@ namespace StaticProgramAnalyzer.TreeBuilding
             var expr = new TimesToken(String.Format("<*,{0},{1}>", leftToken.Content, rightToken.Content));
             expr.Left = leftToken;
             expr.Right = rightToken;
+            expr.Left.Parent = expr;
+            expr.Right.Parent = expr;
             expr.TestValue = leftToken.TestValue * rightToken.TestValue;
             expr.UsesVariables.UnionWith(leftToken.UsesVariables);
             expr.UsesVariables.UnionWith(rightToken.UsesVariables);
@@ -298,8 +385,8 @@ namespace StaticProgramAnalyzer.TreeBuilding
 
         public StatementToken BuildProcedureCall(IToken parent, Queue<ParserToken> tokenQueue)
         {
-            CallToken callToken = new(parent);
             var token = tokenQueue.Dequeue();
+            CallToken callToken = new(parent, token, ++_statementCounter);
             CheckIfValidName(token.Content);
 
             callToken.ProcedureName = token.Content;
@@ -310,7 +397,7 @@ namespace StaticProgramAnalyzer.TreeBuilding
 
         public StatementToken BuildWhileStatement(ParserToken source, IToken parent, Queue<ParserToken> tokenQueue)
         {
-            WhileToken whileToken = new(parent, source);
+            WhileToken whileToken = new(parent, source, ++_statementCounter);
             ParserToken token = tokenQueue.Dequeue();
             CheckIfValidName(token.Content);
             whileToken.VariableName = token.Content;
@@ -322,8 +409,8 @@ namespace StaticProgramAnalyzer.TreeBuilding
 
         public StatementToken BuildIfStatement(IToken parent, Queue<ParserToken> tokenQueue)
         {
-            IfThenElseToken ifToken = new(parent);
             ParserToken token = tokenQueue.Dequeue();
+            IfThenElseToken ifToken = new(parent, token, ++_statementCounter);
             CheckIfValidName(token.Content);
             ifToken.VariableName = token.Content;
             token = tokenQueue.Dequeue();

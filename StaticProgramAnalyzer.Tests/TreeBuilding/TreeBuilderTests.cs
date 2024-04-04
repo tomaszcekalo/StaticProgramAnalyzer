@@ -1,5 +1,7 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using StaticProgramAnalyzer.KnowledgeBuilding;
 using StaticProgramAnalyzer.Parsing;
+using StaticProgramAnalyzer.QueryProcessing;
 using StaticProgramAnalyzer.Tokens;
 using StaticProgramAnalyzer.TreeBuilding;
 using System;
@@ -22,8 +24,8 @@ y = a+((b+c*g)+d*e)*f+k+((b+c*g)+d*e)*f+k+((b+c*g)+d*e)*f+k+((b+c*g)+d*e)*f+k+((
 }";
             var parser = new Parser();
             var tokens = parser.Parse(testProgram.Split("\r\n"));
-            var tb = new TreeBuilder(parser);
-            var pkb = tb.GetProcedures(tokens);
+            var tb = new KnowledgeBuilder(parser);
+            var pkb = tb.GetPKB(tokens);
 
             var at = (pkb.ProceduresTree[0].StatementList[0] as AssignToken);
             Assert.AreEqual(at.Right.TestValue, 11972706660);
@@ -46,8 +48,8 @@ y = (a+b*c)*(e*d)*f;
 }";
             var parser = new Parser();
             var tokens = parser.Parse(testProgram.Split("\r\n"));
-            var tb = new TreeBuilder(parser);
-            var pkb = tb.GetProcedures(tokens);
+            var tb = new KnowledgeBuilder(parser);
+            var pkb = tb.GetPKB(tokens);
             var assigmentList = pkb.ProceduresTree[0].AssigmentList;
         
         List<AssigmentCheck> assigmentChecks = new List<AssigmentCheck>()
@@ -83,7 +85,7 @@ y = (a+b*c)*(e*d)*f;
                 foreach (var tree in asch.trueTree) {
                     Assert.IsTrue(
                         assigmentList[asch.numberOfassigment].ContainsTree(
-                            tb.BuildAssignmentStatement(new ProcedureToken(), "y", 
+                            tb.BuildAssignmentStatement(new ProcedureToken(), new ParserToken() { Content= "y" }, 
                                 new Queue<ParserToken>(parser.Parse(["=" + tree + ";"]))
                             ) as AssignToken
                         )
@@ -93,15 +95,17 @@ y = (a+b*c)*(e*d)*f;
                 {
                     Assert.IsFalse(
                         assigmentList[asch.numberOfassigment].ContainsTree(
-                            tb.BuildAssignmentStatement(new ProcedureToken(), "y",
+                            tb.BuildAssignmentStatement(new ProcedureToken(), new ParserToken() { Content = "y" },
                                 new Queue<ParserToken>(parser.Parse(["=" + tree + ";"]))
                             ) as AssignToken
                         )
                     );
                 }
             }
-
-
+            QueryResultProjector qrp = new QueryResultProjector();
+            QueryProcessor qp = new QueryProcessor(pkb, qrp);
+            String ret = qp.ProcessQuery("assigment a", "select a such that Uses(a, \"a\")");
+            int a = 1;
         }
 
     }

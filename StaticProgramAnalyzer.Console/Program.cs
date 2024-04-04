@@ -1,8 +1,6 @@
-﻿using StaticProgramAnalyzer.Parsing;
+﻿using StaticProgramAnalyzer.KnowledgeBuilding;
+using StaticProgramAnalyzer.Parsing;
 using StaticProgramAnalyzer.QueryProcessing;
-using StaticProgramAnalyzer.Tokens;
-using StaticProgramAnalyzer.TreeBuilding;
-using System.Reflection.Emit;
 
 namespace StaticProgramAnalyzer.Console
 {
@@ -13,9 +11,9 @@ namespace StaticProgramAnalyzer.Console
             var parser = new Parser();
             var lines = File.ReadAllLines(args[0]);
             var tokens = parser.Parse(lines);
-            var treeBuilder = new TreeBuilder(parser);
-            var pkb = treeBuilder.GetProcedures(tokens);
-            var processor = new QueryProcessor(pkb);
+            var treeBuilder = new KnowledgeBuilder(parser);
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
 
             var logFilePath = "log.txt";
             //var processor = new SuperProcessor();
@@ -43,48 +41,5 @@ namespace StaticProgramAnalyzer.Console
                 }
             }
         }
-        //        static void Main(string[] args)
-        //        {
-        //            var parser = new Parser();
-        //            var sample = @"procedure First {
-        //x = 2;
-        //z = 3;
-        //call Second; }
-        //procedure Second {
-        //x = 0;
-        //i = 5;
-        //while i {
-        //x = x + 2 * y;
-        //call Third;
-        //i = i - 1; }
-        //if x then {
-        //x = x + 1; }
-        //else {
-        //z = 1; }
-        //z = z + x + i;
-        //y = z + 2;
-        //x = x * y + z; }
-        //procedure Third {
-        //z = 5;
-        //v = z; }";
-        //            var sample2 = @"procedure Main {
-        //x = x+y+z;
-        //while i {
-        //y = x+i*2; } }";
-        //            var lines = sample2.Split(Environment.NewLine);
-        //            var tokens = parser.Parse(lines);
-        //            var treeBuilder = new TreeBuilding.TreeBuilder(parser);
-        //            var tree = treeBuilder.BuildTree(tokens);
-        //            foreach(var procedure in tree)
-        //            {
-        //                System.Console.WriteLine(procedure);
-        //            }
-
-        //            //foreach (var token in tokens)
-        //            //{
-        //            //    System.Console.WriteLine(token);
-        //            //}
-        //            System.Console.WriteLine("Hello, World!");
-        //        }
     }
 }
