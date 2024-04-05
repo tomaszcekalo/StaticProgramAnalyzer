@@ -2,29 +2,19 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Transactions;
 
 namespace StaticProgramAnalyzer.Tokens
 {
-    internal class ConstantToken : IToken
+    internal class ConstantToken : RefToken
     {
-
         public int Value { get; set; }
-        public IToken Parent { get; set; }
-        public ParserToken Source { get; set; }
 
-        public IEnumerable<IToken> GetDescentands()
+        public ConstantToken(string content) : base(content)
         {
-            return new List<IToken>();
-        }
-
-        public IEnumerable<IToken> GetChildren()
-        {
-            return new List<IToken>();
-        }
-
-        public override string ToString()
-        {
-            return Value.ToString();
+            TestValue = int.Parse(content);
+            Value = int.Parse(content);
+            UsesConstants.Add(content);
         }
     }
     

@@ -7,9 +7,17 @@ namespace StaticProgramAnalyzer.Tokens
 {
     public class AssignToken : StatementToken
     {
+        public ModifyVariableToken Left;
+        public ExpressionToken Right;
+        internal HashSet<string> UsesConstants;
+        internal HashSet<string> UsesVariables;
+        internal HashSet<string> Modifies;
+
+        public string FakeExpression { get; internal set; }
+        List<IToken> VariablesAndConstants { get; set; }
         public AssignToken(IToken parent, ParserToken source, string fakeExpression, int statementNumber) : base(parent, source, statementNumber)
         {
-            VariablesAndConstants= new List<IToken>()
+            VariablesAndConstants = new List<IToken>()
             {
                 new ModifyVariableToken(this, source.Content)
                 {
@@ -29,13 +37,13 @@ namespace StaticProgramAnalyzer.Tokens
                     if (sb.Length > 0)
                     {
                         var text = sb.ToString();
-                        if(int.TryParse(text, out var result))
+                        if (int.TryParse(text, out var result))
                         {
-                            VariablesAndConstants.Add(new ConstantToken()
+                            VariablesAndConstants.Add(new ConstantToken(text)
                             {
                                 Value = result,
-                                Parent=this,
-                                Source=source
+                                Parent = this,
+                                Source = source
                             });
                         }
                         else
@@ -50,11 +58,6 @@ namespace StaticProgramAnalyzer.Tokens
                 }
             }
         }
-
-        public string VariableName { get; internal set; }
-        public string FakeExpression { get; internal set; }
-        List<IToken> VariablesAndConstants { get; set; }
-
         public override IEnumerable<IToken> GetChildren()
         {
             return VariablesAndConstants;
@@ -64,5 +67,39 @@ namespace StaticProgramAnalyzer.Tokens
         {
             return VariablesAndConstants;
         }
+        //checks if provided tree exists in the assigment tree
+        public bool ContainsTree(AssignToken checkTree)
+        {
+            return Right.Content.Contains(checkTree.Right.Content);
+        }
+        //checks if the assigment tree equals provided one
+        public bool EqualsTree(AssignToken checkTree)
+        {
+            return Right.Content.Equals(checkTree.Right.Content);
+        }
+        public override string ToString()
+        {
+            //return String.Format("{0}={1}", Left.VariableName, Right.Content);
+            return StatementNumber.ToString();
+        }
+        /*
+        internal void SetVariablesAndConstants()
+        {
+            VariablesAndConstants.Add()
+            foreach (var c in UsesConstants){
+                VariablesAndConstants.Add(new UseVariableToken(this, c)
+                {
+                    Source = this.Source
+                });
+            }
+            foreach (var c in UsesVariables)
+            {
+                VariablesAndConstants.Add(new UseVariableToken(this, c)
+                {
+                    Source = this.Source
+                });
+            }
+        }
+        */
     }
 }

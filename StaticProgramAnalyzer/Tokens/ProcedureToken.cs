@@ -11,8 +11,8 @@ namespace StaticProgramAnalyzer.Tokens
         public string ProcedureName { get; set; }
         public List<StatementToken> StatementList { get; set; }
         public ParserToken Source { get; set; }
-
-        public IToken Parent => null;
+        //public List<AssignToken> AssigmentList { get; set; }
+        public IToken Parent { get => null; set { } }
 
         public IEnumerable<IToken> GetChildren()
         {

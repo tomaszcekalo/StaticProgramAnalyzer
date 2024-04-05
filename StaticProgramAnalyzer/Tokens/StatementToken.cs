@@ -19,7 +19,7 @@ namespace StaticProgramAnalyzer.Tokens
 
         public abstract IEnumerable<IToken> GetChildren();
 
-        public IToken Parent { get; }
+        public IToken Parent { get; set; }
         public ParserToken Source { get; set; }
         public int StatementNumber { get; set; }
         public override string ToString()
