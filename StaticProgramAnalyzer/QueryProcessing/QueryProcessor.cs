@@ -215,8 +215,8 @@ namespace StaticProgramAnalyzer.QueryProcessing
 
         private IEnumerable<Dictionary<string, IToken>> Pattern(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right, string rightestRight=null)
         {
-            left = left.Replace("\"", "");
-            right = right.Replace("\"", "");
+            left = left.Replace("\"", "").Trim();
+            right = right.Replace("\"", "").Trim();
             bool exactMatch = !(right.StartsWith("_") && right.EndsWith("_") && right.Length > 1);
             if (exactMatch == false)
             {
@@ -224,7 +224,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
             }
             if (rightestRight != null)
             {
-                rightestRight = rightestRight.Replace("\"", "");
+                rightestRight = rightestRight.Replace("\"", "").Trim();
             }
             Parser parser = new Parser();
             KnowledgeBuilder kb = new KnowledgeBuilder(parser);
