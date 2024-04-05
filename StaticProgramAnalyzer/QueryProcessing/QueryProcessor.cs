@@ -62,7 +62,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
                     token => 
                     value.Value.Evaluate(token)
                     ).ToList());
-            //variableQueries.Add("_", _pkb.TokenList.ToList());
+            variableQueries.Add("_", _pkb.TokenList.ToList());
             var variableNames = variableQueries.Keys.ToList();
 
             IEnumerable<Dictionary<string, IToken>> combinations =new List<Dictionary<string, IToken>>();
