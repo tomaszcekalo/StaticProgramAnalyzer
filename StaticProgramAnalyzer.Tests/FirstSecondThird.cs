@@ -15,6 +15,16 @@ namespace StaticProgramAnalyzer.Tests
         procedure Second {
         x = 0;
         i = 5;
+        y = x + 1 * y;
+        y = x + 1;
+        k = x + 1 * y;
+        k = x + 1;
+        while k {
+        x = x + y;}
+        if k then {
+        l = l + 1;}
+        else {
+        l = l + 2;}
         while i {
         x = x + 2 * y;
         call Third;
@@ -495,5 +505,23 @@ namespace StaticProgramAnalyzer.Tests
             //Assert
             Assert.AreEqual("3, 5, 6, 9", result);
         }
+
+        [TestMethod]
+        public void PatternTest()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("while w;", "Select w pattern w('x',_)");
+            result = processor.ProcessQuery("if ifstm;", "Select ifstm pattern ifstm('k',_,_)");
+            result = processor.ProcessQuery("assign a;", "Select a pattern a('x',_)");
+            result = processor.ProcessQuery("assign a;", "Select a pattern a('y',_\"x+1\"_)");
+            result = processor.ProcessQuery("assign a;", "Select a pattern a('y',\"x+1\")");
+
+            //Assert
+            //Assert.AreEqual("3, 5, 6, 9", result);
+        }
+
     }
 }
