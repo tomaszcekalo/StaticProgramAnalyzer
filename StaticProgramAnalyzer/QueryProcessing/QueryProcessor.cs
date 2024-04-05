@@ -1,9 +1,16 @@
-﻿using StaticProgramAnalyzer.QueryProcessing.Predicates;
+﻿using StaticProgramAnalyzer.KnowledgeBuilding;
+using StaticProgramAnalyzer.Parsing;
+using StaticProgramAnalyzer.QueryProcessing.Predicates;
 using StaticProgramAnalyzer.Tokens;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
+using System.Xml.Schema;
 
 namespace StaticProgramAnalyzer.QueryProcessing
 {
@@ -51,8 +58,11 @@ namespace StaticProgramAnalyzer.QueryProcessing
 
             var variableQueries = variablePredicates.ToDictionary(
                 key => key.Key,
-                value => _pkb.TokenList.Where(token => value.Value.Evaluate(token)).ToList());
-            variableQueries.Add("_", _pkb.TokenList.ToList());
+                value => _pkb.TokenList.Where(
+                    token => 
+                    value.Value.Evaluate(token)
+                    ).ToList());
+            //variableQueries.Add("_", _pkb.TokenList.ToList());
             var variableNames = variableQueries.Keys.ToList();
 
             IEnumerable<Dictionary<string, IToken>> combinations =new List<Dictionary<string, IToken>>();
@@ -76,9 +86,14 @@ namespace StaticProgramAnalyzer.QueryProcessing
                     return newDict;
                 })).ToList();
             }
+            //just because we can't be sure if there's no variable named "pattern"
+            Regex regex = new Regex("pattern [^(]+\\([^,]+,[^,)]+(,[^)]+)?\\)");
+            String withoutPattern = regex.Replace(selects, "");
+            MatchCollection mc = regex.Matches(selects);
+            List<String> matches = mc.Select(x => x.Value).ToList();
 
             // here are conditions
-            var conditionStrings = selects.Split(new string[]
+            var conditionStrings = withoutPattern.Split(new string[]
             {
                 " such that ",
                 " with ",
@@ -86,6 +101,9 @@ namespace StaticProgramAnalyzer.QueryProcessing
             }, StringSplitOptions.RemoveEmptyEntries)
                 .Select(x => x.Trim())
                 .ToList();
+
+            conditionStrings.AddRange(matches);
+
             for (int i = 1; i < conditionStrings.Count; i++)
             {
                 combinations = FilterByCondition(combinations, conditionStrings[i]);
@@ -181,8 +199,96 @@ namespace StaticProgramAnalyzer.QueryProcessing
             {
                 return Modifies(combinations, parametersArray[0], parametersArray[1]);
             }
+            if (condition.StartsWith("pattern"))
+            {
+                if (parametersArray.Length > 2)
+                {
+                    return Pattern(combinations, parametersArray[0], parametersArray[1], parametersArray[2]);
+                } else
+                {
+                    return Pattern(combinations, parametersArray[0], parametersArray[1]);
+                }
+            }
 
             return combinations;
+        }
+
+        private IEnumerable<Dictionary<string, IToken>> Pattern(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right, string rightestRight=null)
+        {
+            left = left.Replace("\"", "");
+            right = right.Replace("\"", "");
+            bool exactMatch = !(right.StartsWith("_") && right.EndsWith("_") && right.Length > 1);
+            if (exactMatch == false)
+            {
+                right = right.Substring(1, right.Length - 2);
+            }
+            if (rightestRight != null)
+            {
+                rightestRight = rightestRight.Replace("\"", "");
+            }
+            Parser parser = new Parser();
+            KnowledgeBuilder kb = new KnowledgeBuilder(parser);
+            return combinations.Where(x =>
+            {
+                foreach(var token in x.Values)
+                {
+                    if (token is WhileToken)
+                    {
+                        if (left == "_" || (token as WhileToken).VariableName.Equals(left)) {
+                            return true;
+                        } else
+                        {
+                            return false;
+                        }
+                    }
+                    else if(token is IfThenElseToken)
+                    {
+                        if (left == "_" || (token as IfThenElseToken).VariableName.Equals(left))
+                        {
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
+                        }
+                    } else if(token is AssignToken)
+                    {
+                        var at = token as AssignToken;
+                        if(left == "_" && right == "_")
+                        {
+                            return true;
+                        }
+                        bool variableMatch = left == "_" || at.Left.VariableName.Equals(left);
+                        if (variableMatch)
+                        {
+                            bool astMatch = right == "_";
+                            if (astMatch == false)
+                            {
+                                var pqlAst = kb.BuildAssignTokenFromString(right);
+                                if (exactMatch)
+                                {
+                                    return at.EqualsTree(pqlAst);
+                                }
+                                else
+                                {
+                                    return at.ContainsTree(pqlAst);
+                                }
+                            } else
+                            {
+                                return true;
+                            }
+                        } else
+                        {
+                            return false;
+                        }
+                    } else
+                    {
+                        throw new Exception("Unsupported token");
+                    }
+                    return false;
+                }
+                return true;
+            }).ToList();
         }
 
         private IEnumerable<Dictionary<string, IToken>> ParentStar(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
