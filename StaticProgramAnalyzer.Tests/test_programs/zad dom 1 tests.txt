@@ -1,0 +1,42 @@
+assign a;
+Select a pattern a ("d",_)
+11, 22, 25, 3
+assign a;
+Select a pattern a ("t", "3*a")
+none
+while w; assign a;
+Select a pattern a ("a",_) such that Follows (w, a)
+13
+assign a;
+Select a pattern a (_, "d+1")
+12
+assign a;
+Select a pattern a (_, "d*5+3")
+none
+assign a;
+Select a pattern a (_, _"d+k*b"_)
+none
+assign a;
+Select a pattern a (_, _"t*a+d"_)
+26
+assign a;
+Select a pattern a (_, _"d+t"_)
+11, 13, 14
+assign a;
+Select a pattern a (_, _"k+d"_)
+none
+assign a;
+Select a pattern a (_, _"d+3"_)
+none
+assign a;
+Select a pattern a (_, _"d+3*a"_)
+19
+assign a;
+Select a pattern a (_, _"3*a"_)
+19
+assign a;
+Select a pattern a (_, _"5+3"_)
+none
+assign a;
+Select a pattern a (_, _"d+1"_)
+12
