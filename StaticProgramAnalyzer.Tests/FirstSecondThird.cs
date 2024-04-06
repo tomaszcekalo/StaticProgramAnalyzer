@@ -30,6 +30,7 @@ namespace StaticProgramAnalyzer.Tests
         z = 5;
         v = z; }";
 
+
         //----------------------------------------------
         private Parser parser;
 
@@ -495,6 +496,7 @@ namespace StaticProgramAnalyzer.Tests
             //Assert
             Assert.AreEqual("3, 5, 6, 9", result);
         }
+
         [TestMethod]
         public void SelectPairsOfVariablesAndProceduresNamedTheSame()
         {
@@ -539,6 +541,7 @@ namespace StaticProgramAnalyzer.Tests
         //    //Assert
         //    Assert.AreEqual("none", result);
         //}
+
 
     }
 }

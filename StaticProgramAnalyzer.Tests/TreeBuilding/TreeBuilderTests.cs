@@ -1,4 +1,5 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+using Newtonsoft.Json.Linq;
 using StaticProgramAnalyzer.KnowledgeBuilding;
 using StaticProgramAnalyzer.Parsing;
 using StaticProgramAnalyzer.QueryProcessing;

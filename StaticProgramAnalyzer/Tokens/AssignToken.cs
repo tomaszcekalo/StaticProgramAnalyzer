@@ -15,6 +15,7 @@ namespace StaticProgramAnalyzer.Tokens
 
         public string FakeExpression { get; internal set; }
         List<IToken> VariablesAndConstants { get; set; }
+        public AssignToken() :base(null, null, 0){ }
         public AssignToken(IToken parent, ParserToken source, string fakeExpression, int statementNumber) : base(parent, source, statementNumber)
         {
             VariablesAndConstants = new List<IToken>()

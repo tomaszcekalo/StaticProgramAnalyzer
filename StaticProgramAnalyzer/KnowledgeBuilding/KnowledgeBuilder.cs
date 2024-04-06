@@ -258,8 +258,8 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
             }
             return result;
         }
-
-        private class ExpresionTokenPriority
+      
+        public class ExpresionTokenPriority
         {
             public static Dictionary<String, int> operatorPriorityDict = new Dictionary<string, int>(){
                 {"+", 0 },
@@ -334,7 +334,7 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
             return assignToken;
         }
 
-        private ExpresionTokenPriority BuildExpressionToken(Queue<ParserToken> tokens, ExpresionTokenPriority leftToken = null)
+        public ExpresionTokenPriority BuildExpressionToken(Queue<ParserToken> tokens, ExpresionTokenPriority leftToken = null)
         {
             if (tokens.Count > 0 && leftToken == null)
             {
@@ -542,6 +542,17 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
             Contract.Assert(token.Content == "{");
             ifToken.Else = this.GetStatementList(ifToken, tokenQueue);
             return ifToken;
+        }
+
+        public AssignToken BuildAssignTokenFromString(string right)
+        {
+            AssignToken assignToken = new AssignToken();
+            if(right.EndsWith(";") == false)
+            {
+                right += ";";
+            }
+            assignToken.Right = BuildExpressionToken(new Queue<ParserToken>(Parser.Parse(new String[] { right }))).expresionToken;
+            return assignToken;
         }
     }
 }
