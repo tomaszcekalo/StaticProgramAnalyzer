@@ -215,7 +215,7 @@ namespace StaticProgramAnalyzer.Tests
         [TestMethod]
         public void PatternTestAssignMultiParentWANone()
         {
-            Assert.IsTrue(processor.ProcessQuery("assign a; while w", "Select a such that Parent(w, a) and pattern a(_,_) and pattern w(\"c\",_)").Equals(""));
+            Assert.AreEqual(processor.ProcessQuery("assign a; while w", "Select a such that Parent(w, a) and pattern a(_,_) and pattern w(\"c\",_)"), "none");
         }
     }
 }

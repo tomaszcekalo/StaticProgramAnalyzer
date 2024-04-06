@@ -291,19 +291,19 @@ namespace StaticProgramAnalyzer.Tests
         //    Assert.AreEqual("13, 14, 15", result);
         //}
 
-        //[TestMethod]
-        //public void FindPatternX()
-        //{
-        //    //Patterns are specified using relational notation so they look the same as conditions in a such that clause.
-        //    //Think about a node in the AST as a relationship among its children.
-        //    //Arrange
-        //    var pkb = treeBuilder.GetPKB(tokens);
-        //    var processor = new QueryProcessor(pkb, new QueryResultProjector());
-        //    //Act
-        //    var result = processor.ProcessQuery("assign a;", "Select a pattern a (\"x\", _)");
-        //    //Assert
-        //    Assert.AreEqual("1, 4, 7, 11, 15", result);
-        //}
+        [TestMethod]
+        public void FindPatternX()
+        {
+            //Patterns are specified using relational notation so they look the same as conditions in a such that clause.
+            //Think about a node in the AST as a relationship among its children.
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("assign a;", "Select a pattern a (\"x\", _)");
+            //Assert
+            Assert.AreEqual("1, 4, 7, 11, 15", result);
+        }
 
         [TestMethod]
         public void FindModifiesX()
@@ -508,17 +508,17 @@ namespace StaticProgramAnalyzer.Tests
             //Assert
             Assert.AreEqual("none", result);
         }
-        //[TestMethod]
-        //public void S2ParentStar()
-        //{
-        //    //Arrange
-        //    var pkb = treeBuilder.GetPKB(tokens);
-        //    var processor = new QueryProcessor(pkb, new QueryResultProjector());
-        //    //Act
-        //    var result = processor.ProcessQuery("stmt s, s2;", "Select s such that Parent*(s, s2)");
-        //    //Assert
-        //    Assert.AreEqual("6, 10", result);
-        //}
+        [TestMethod]
+        public void S2ParentStar()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("stmt s, s2;", "Select s such that Parent*(s, s2)");
+            //Assert
+            Assert.AreEqual("6, 10", result);
+        }
         [TestMethod]
         public void WhileIfParent()
         {
@@ -530,17 +530,17 @@ namespace StaticProgramAnalyzer.Tests
             //Assert
             Assert.AreEqual("none", result);
         }
-        //[TestMethod]
-        //public void ThreeWhiles()
-        //{
-        //    //Arrange
-        //    var pkb = treeBuilder.GetPKB(tokens);
-        //    var processor = new QueryProcessor(pkb, new QueryResultProjector());
-        //    //Act
-        //    var result = processor.ProcessQuery("while w1, w2, w3;", "Select <w1, w2, w3> such that Parent* (w1, w2) and Parent* (w2, w3)");
-        //    //Assert
-        //    Assert.AreEqual("none", result);
-        //}
+        [TestMethod]
+        public void ThreeWhiles()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("while w1, w2, w3;", "Select <w1, w2, w3> such that Parent* (w1, w2) and Parent* (w2, w3)");
+            //Assert
+            Assert.AreEqual("none", result);
+        }
 
 
     }

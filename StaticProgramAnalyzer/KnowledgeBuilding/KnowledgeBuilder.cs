@@ -217,11 +217,11 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
         public void CheckIfValidName(string name)
         {
             if (!Parser.IsLetter(name[0]))
-                throw new Exception("Procedure name must start with a letter");
+                throw new ArgumentException("Procedure name must start with a letter");
 
             if (!name.All(c => Parser.IsLetter(c) || Parser.IsDigit(c)))
             {
-                throw new Exception("Procedure name must contain only letters and digits");
+                throw new ArgumentException("Procedure name must contain only letters and digits");
             }
         }
 

@@ -62,7 +62,10 @@ namespace StaticProgramAnalyzer.QueryProcessing
                     token => 
                     value.Value.Evaluate(token)
                     ).ToList());
-            variableQueries.Add("_", _pkb.TokenList.ToList());
+            if(selects.Contains('_'))
+            {
+                variableQueries.Add("_", _pkb.TokenList.ToList());
+            }
             var variableNames = variableQueries.Keys.ToList();
 
             IEnumerable<Dictionary<string, IToken>> combinations = new List<Dictionary<string, IToken>>();
@@ -307,11 +310,14 @@ namespace StaticProgramAnalyzer.QueryProcessing
             var result= combinations.Where(x =>
             {
                 //for all parents of right
-                var parent = x[left];
+                var parent = x[right].Parent;
                 while (parent != null)
                 {
-                    if (parent == x[right])
-                        return true;
+                    if(parent is WhileToken || parent is IfThenElseToken)
+                    {
+                        if (parent == x[left])
+                            return true;
+                    }
                     parent = parent.Parent;
                 }
                 return false;
