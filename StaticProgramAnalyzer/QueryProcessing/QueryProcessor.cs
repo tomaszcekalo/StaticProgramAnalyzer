@@ -23,9 +23,9 @@ namespace StaticProgramAnalyzer.QueryProcessing
 
     public class QueryProcessor : IQueryProcessor
     {
-        private ProgramKnowledgeBase _pkb;
+        private readonly ProgramKnowledgeBase _pkb;
         private readonly IQueryResultProjector projector;
-        private char[] _whitespace = new char[] { ' ', '\t', '\n', '\r', ',' };
+        private readonly char[] _whitespace = new char[] { ' ', '\t', '\n', '\r', ',' };
 
         public QueryProcessor(ProgramKnowledgeBase pkb, IQueryResultProjector projector)
         {
@@ -65,8 +65,8 @@ namespace StaticProgramAnalyzer.QueryProcessing
             variableQueries.Add("_", _pkb.TokenList.ToList());
             var variableNames = variableQueries.Keys.ToList();
 
-            IEnumerable<Dictionary<string, IToken>> combinations =new List<Dictionary<string, IToken>>();
-            if(variableNames.Count>0)
+            IEnumerable<Dictionary<string, IToken>> combinations = new List<Dictionary<string, IToken>>();
+            if (variableNames.Count > 0)
             {
                 var firstKey = variableNames[0];
                 combinations = variableQueries[firstKey]
@@ -111,7 +111,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
             // get only variables that are in select
             var variableToSelect = GetVariablesToSelect(selects, variablePredicates);
 
-            if(variableToSelect.Contains("BOOLEAN"))
+            if (variableToSelect.Contains("BOOLEAN"))
             {
                 return projector.ProjectBoolean(combinations);
             }
@@ -122,17 +122,17 @@ namespace StaticProgramAnalyzer.QueryProcessing
         {
             var array = condition.Split('=');
 
-            return combinations.Where(x=> GetValueOrProperty(array[0], x) == GetValueOrProperty(array[1], x));
+            return combinations.Where(x => GetValueOrProperty(array[0], x) == GetValueOrProperty(array[1], x));
         }
 
         public string GetValueOrProperty(string selector, Dictionary<string, IToken> x)
         {
-            selector=selector.Trim();
-            if(int.TryParse(selector, out int result))
+            selector = selector.Trim();
+            if (int.TryParse(selector, out int result))
             {
                 return result.ToString();
             }
-            if(selector.StartsWith("\"") && selector.EndsWith("\""))
+            if (selector.StartsWith('"') && selector.EndsWith('"'))
             {
                 return selector.Replace("\"", "");
             }
@@ -142,25 +142,24 @@ namespace StaticProgramAnalyzer.QueryProcessing
 
             if (pqlProperty == "procName")
             {
-                    var withProcname = x[pqlVar] as IHasProcedureName;
-                    return withProcname?.ProcedureName;
+                var withProcname = x[pqlVar] as IHasProcedureName;
+                return withProcname?.ProcedureName;
             }
             if (pqlProperty == "stmt#")
             {
-                return  (x[pqlVar] as StatementToken)?.StatementNumber.ToString();
+                return (x[pqlVar] as StatementToken)?.StatementNumber.ToString();
             }
             if (pqlProperty == "varName")
             {
-                    var withVarName = x[pqlVar] as VariableToken;
-                    return withVarName?.VariableName;
-                
+                var withVarName = x[pqlVar] as VariableToken;
+                return withVarName?.VariableName;
             }
             if (pqlProperty == "value")
             {
-                    var withValue = x[pqlVar] as ConstantToken;
-                    return withValue?.Value.ToString() ;
+                var withValue = x[pqlVar] as ConstantToken;
+                return withValue?.Value.ToString();
             }
-            throw new Exception("invalid property");
+            throw new InvalidPropertyException("invalid property");
         }
 
         public IEnumerable<Dictionary<string, IToken>> FilterByCondition(
@@ -191,11 +190,11 @@ namespace StaticProgramAnalyzer.QueryProcessing
             {
                 return Parent(combinations, parametersArray[0], parametersArray[1]);
             }
-            if(condition.StartsWith("Uses"))
+            if (condition.StartsWith("Uses"))
             {
                 return Uses(combinations, parametersArray[0], parametersArray[1]);
             }
-            if(condition.StartsWith("Modifies"))
+            if (condition.StartsWith("Modifies"))
             {
                 return Modifies(combinations, parametersArray[0], parametersArray[1]);
             }
@@ -303,51 +302,38 @@ namespace StaticProgramAnalyzer.QueryProcessing
                             && x.Parent == c[left]);
                 }).ToList();
             }
-            left =left.Trim();
+            left = left.Trim();
             right = right.Trim();
-            return combinations.Where(x =>
+            var result= combinations.Where(x =>
             {
                 //for all parents of right
                 var parent = x[left];
-                while(parent!=null)
+                while (parent != null)
                 {
                     if (parent == x[right])
                         return true;
                     parent = parent.Parent;
                 }
                 return false;
-            });
+            }).Distinct().ToList();
+            return result;
         }
 
         private IEnumerable<Dictionary<string, IToken>> Modifies(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
         {
             right = right.Trim().Replace("\"", "");
-            var assignments=
-             combinations.Where(x =>
-            {
-                var leftToken = x[left];
-                var descendantsThatModifies = leftToken.GetDescentands()
-                    .OfType<ModifyVariableToken>();
-                return descendantsThatModifies
-                    .Any(modifies => modifies.VariableName == right);
-            }).ToList();
-            var assignmentProcedures = assignments
-                .Select(x=> x[left])
-                .Select(x => GetFinalParent(x, left).ProcedureName)
-                .ToList();
-            var calls = combinations.Where(x => x[left] is CallToken)
-                .Where(x => assignmentProcedures.Contains((x[left] as CallToken).ProcedureName));
-
-            return assignments.Concat(calls);
+            var assignments = combinations.Where(x => _pkb.AllModifies[right].Contains(x[left])).ToList();
+            return assignments;
         }
+
 
         private ProcedureToken GetFinalParent(IToken x, string left)
         {
-            if(x.Parent is null && x is ProcedureToken)
+            if (x.Parent is null && x is ProcedureToken)
             {
                 return x as ProcedureToken;
             }
-            if(x.Parent is ProcedureToken)
+            if (x.Parent is ProcedureToken)
             {
                 return x.Parent as ProcedureToken;
             }
@@ -356,37 +342,9 @@ namespace StaticProgramAnalyzer.QueryProcessing
 
         private IEnumerable<Dictionary<string, IToken>> Uses(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
         {
-            right = right.Trim().Replace("\"","");
-            var uses = combinations.Where(x =>
-            {
-                var leftToken = x[left.Trim()];
-                var descendantsThatUse = leftToken.GetDescentands()
-                    .OfType<UseVariableToken>();
-                return descendantsThatUse
-                    .Any(use => use.VariableName == right);
-            }).ToList();
-
-            var usesProcedures = uses
-                .Select(x => x[left])
-                .Select(x => GetFinalParent(x, left).ProcedureName)
-                .ToList();
-            var calls = combinations.Where(x => x[left] is CallToken)
-                .Where(x => usesProcedures.Contains((x[left] as CallToken).ProcedureName));
-
-            return uses.Concat(calls);
-
-
-            //var usesProcedures = uses
-            //    .Select(x => x[left])
-            //    .Select(x => GetFinalParent(x, left).ProcedureName)
-            //    .ToList();
-            //var callingProcedures = _pkb.AllCalls
-            //    .Where(x => x.Value.Any(y => usesProcedures.Contains(y)))
-            //    .Select(x => x.Key);
-            //var calls = combinations.Where(x => x[left] is CallToken)
-            //    .Where(x => callingProcedures.Contains((x[left] as CallToken).ProcedureName));
-
-            //return uses.Concat(calls);
+            right = right.Trim().Replace("\"", "");
+            var result = combinations.Where(x => _pkb.AllUses[right].Contains(x[left])).ToList();
+            return result;
         }
 
         public IEnumerable<Dictionary<string, IToken>> Parent(
@@ -404,9 +362,10 @@ namespace StaticProgramAnalyzer.QueryProcessing
                             && x.Parent == c[left]);
                 }).ToList();
             }
-            return combinations.Where(x =>
-                (x[right.Trim()] as StatementToken)?.Parent == x[left.Trim()]
-            );
+            var result = combinations.Where(x =>
+                (x[right.Trim()] as StatementToken)?.Parent == x[left.Trim()])
+                .ToList();
+            return result;
         }
 
         public IEnumerable<Dictionary<string, IToken>> CallsStar(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
@@ -416,9 +375,8 @@ namespace StaticProgramAnalyzer.QueryProcessing
 
             return combinations.Where(x =>
                 _pkb.AllCalls[(x[left] as IHasProcedureName).ProcedureName].Contains((x[right] as IHasProcedureName).ProcedureName));
-
-
         }
+
         public IEnumerable<Dictionary<string, IToken>> Calls(
             IEnumerable<Dictionary<string, IToken>> combinations,
             string left,
@@ -427,7 +385,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
             right = right.Trim();
             left = left.Trim();
             bool rightHasQuotes = right.StartsWith("\"") && right.EndsWith("\"");
-            if(left.StartsWith("\"") && left.EndsWith("\""))
+            if (left.StartsWith("\"") && left.EndsWith("\""))
             {
                 var called = _pkb.CallsDirectly[left.Replace("\"", "")];
                 return combinations.Where(x =>
@@ -441,10 +399,10 @@ namespace StaticProgramAnalyzer.QueryProcessing
                 var leftToken = x[left];
                 var descendantsThatCall = leftToken.GetDescentands()
                     .OfType<CallToken>();
-                if(rightHasQuotes)
+                if (rightHasQuotes)
                 {
                     return descendantsThatCall
-                        .Any(call => call.ProcedureName == right.Replace("\"",""));
+                        .Any(call => call.ProcedureName == right.Replace("\"", ""));
                 }
                 return descendantsThatCall
                     .Any(call => right == "_" || call.ProcedureName == x[right].ToString());
@@ -508,10 +466,6 @@ namespace StaticProgramAnalyzer.QueryProcessing
             else if (type == "assign")
             {
                 return new IsAssignPredicate();
-            }
-            else if (type == "while")
-            {
-                return new IsWhilePredicate();
             }
             else if (type == "constant")
             {

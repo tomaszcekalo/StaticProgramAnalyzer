@@ -38,10 +38,14 @@ namespace StaticProgramAnalyzer
             {
                 outputs = outputs.OrderBy(x => int.Parse(x));
             }
-            // join all of them together
-            var resultString = string.Join(", ", outputs);
+            if(outputs.Any())
+            {
+                // join all of them together
+                var resultString = string.Join(", ", outputs);
 
-            return resultString;
+                return resultString;
+            }
+            return "none";
         }
 
         public string ProjectBoolean(IEnumerable<Dictionary<string, IToken>> combinations)

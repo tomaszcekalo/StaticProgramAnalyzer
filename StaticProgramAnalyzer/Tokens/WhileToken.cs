@@ -4,14 +4,14 @@ using System.Linq;
 
 namespace StaticProgramAnalyzer.Tokens
 {
-    public class WhileToken : StatementToken
+    public class WhileToken : StatementToken, IUseVariableToken
     {
         public WhileToken(IToken parent, ParserToken source, int statementNumber) : base(parent, source, statementNumber)
         {
         }
 
-        public string VariableName { get; internal set; }
-        public List<StatementToken> StatementList { get; internal set; }
+        public string VariableName { get; set; }
+        public List<StatementToken> StatementList { get; set; }
 
         public override IEnumerable<IToken> GetChildren()
         {

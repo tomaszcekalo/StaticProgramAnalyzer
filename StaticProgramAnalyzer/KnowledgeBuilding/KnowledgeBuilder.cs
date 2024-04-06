@@ -13,7 +13,8 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
 {
     public class KnowledgeBuilder
     {
-        int _statementCounter = 0;
+        private int _statementCounter = 0;
+
         public KnowledgeBuilder(Parser parser)
         {
             Parser = parser;
@@ -38,7 +39,7 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
             var result = new ProgramKnowledgeBase()
             {
                 ProceduresTree = procedures,
-                TokenList = procedures.Concat(procedures.SelectMany(p => p.GetDescentands())).OrderBy(x=>x.Source.LineNumber),
+                TokenList = procedures.Concat(procedures.SelectMany(p => p.GetDescentands())).OrderBy(x => x.Source.LineNumber),
                 CallsDirectly = procedures.Select(x => new
                 {
                     procedureName = x.ProcedureName,
@@ -48,7 +49,108 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
 
             var allCalls = GetAllCalls(result.CallsDirectly);
             result.AllCalls = allCalls;
+            var allUses = GetAllUses(result);
+            result.AllUses = allUses;
+            var allModifies = GetAllModifies(result);
+            result.AllModifies = allModifies;
             return result;
+        }
+
+        public Dictionary<string, HashSet<IToken>> GetAllModifies(ProgramKnowledgeBase pkb)
+        {
+            var directModifies = pkb.ProceduresTree
+                .SelectMany(x => x.GetDescentands().OfType<ModifyVariableToken>())
+                .Select(x => (x.VariableName, x as IToken));
+
+            var result = directModifies
+                .GroupBy(x => x.VariableName)
+                .ToDictionary(x => x.Key, x => x.Select(t=> t.Item2).ToHashSet());
+
+            if (directModifies.Any())
+            {
+                List<(string, IToken)> assignments;
+                assignments = AddAllParentsOfStatements(result, directModifies);
+                while (assignments.Any())
+                {
+                    assignments = AddAllCallingProcedures(result, assignments, pkb.TokenList);
+                    assignments = AddAllParentsOfStatements(result, assignments);
+                }
+            }
+            return result;
+        }
+
+        public List<(string, IToken)> AddAllParentsOfStatements(
+            Dictionary<string, HashSet<IToken>> result,
+            IEnumerable<(string, IToken)> statements)
+        {
+            List<(string, IToken)> addedParents = new List<(string, IToken)>();
+            foreach (var row in statements)
+            {
+                var allParents = GetAllParents(row.Item2);
+                foreach (var parent in allParents)
+                {
+                    if (result[row.Item1].Add(parent))
+                    {
+                        addedParents.Add((row.Item1, parent));
+                    }
+                }
+            }
+            return addedParents;
+        }
+
+        private List<(string, IToken)> AddAllCallingProcedures(
+            Dictionary<string, HashSet<IToken>> result,
+            List<(string, IToken)> addedParents,
+            IEnumerable<IToken> tokenList)
+        {
+            List<(string, IToken)> addedCalls = new List<(string, IToken)>();
+            foreach (var item in addedParents.Where(x => x.Item2 is ProcedureToken))
+            {
+                var procedure = item.Item2 as ProcedureToken;
+                //for each procedure get calls that are calling it
+                var calls = tokenList.OfType<CallToken>().Where(x => x.ProcedureName == procedure.ProcedureName);
+                foreach (var call in calls)
+                {
+                    if (result[item.Item1].Add(call))
+                    {
+                        addedCalls.Add((item.Item1, call));
+                    }
+                }
+            }
+            return addedCalls;
+        }
+
+        public Dictionary<string, HashSet<IToken>> GetAllUses(ProgramKnowledgeBase pkb)
+        {
+            var directUses= pkb.ProceduresTree
+                .SelectMany(x => x.GetDescentands().OfType<IUseVariableToken>())
+                .Select(x => (x.VariableName, x as IToken));
+
+            var result = directUses
+                .GroupBy(x => x.VariableName)
+                .ToDictionary(x => x.Key, x => x.Select(t => t.Item2).ToHashSet());
+
+            if (directUses.Any())
+            {
+                List<(string, IToken)> uses;
+                uses = AddAllParentsOfStatements(result, directUses);
+                while (uses.Any())
+                {
+                    uses = AddAllCallingProcedures(result, uses, pkb.TokenList);
+                    uses = AddAllParentsOfStatements(result, uses);
+                }
+            }
+            return result;
+        }
+
+        public IEnumerable<IToken> GetAllParents(IToken x)
+        {
+            var parent = x.Parent;
+            while (parent != null)
+            {
+                yield return parent;
+                parent = parent.Parent;
+            }
         }
 
         public Dictionary<string, HashSet<string>> GetAllCalls(Dictionary<string, HashSet<string>> callsDirectly)
@@ -156,6 +258,7 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
             }
             return result;
         }
+      
         public class ExpresionTokenPriority
         {
             public static Dictionary<String, int> operatorPriorityDict = new Dictionary<string, int>(){
@@ -167,15 +270,21 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
                 {")", -100 },
                 {";", -1000 }
             };
+
             public ExpressionToken expresionToken;
             private ExpressionToken _operatorToken;
+
             public ExpressionToken operatorToken
             {
                 set { operatorPriority = ExpresionTokenPriority.operatorPriorityDict[value.Content]; _operatorToken = value; }
                 get { return _operatorToken; }
             }
+
             public int operatorPriority;
-            public ExpresionTokenPriority() { }
+
+            public ExpresionTokenPriority()
+            { }
+
             public ExpresionTokenPriority(ExpressionToken expresionToken, ExpressionToken operatorToken)
             {
                 this.expresionToken = expresionToken;
@@ -186,20 +295,20 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
 
         public StatementToken BuildAssignmentStatement(IToken parent, ParserToken leftHandToken, Queue<ParserToken> tokenQueue)
         {
-                /*
-                CheckIfValidName(leftHandToken.Content);
-                List<ParserToken> tokens = new();
-                ParserToken token = tokenQueue.Dequeue();
-                while (tokenQueue.Count > 0 && token.Content != ";")
-                {
-                    token = tokenQueue.Dequeue();
-                    tokens.Add(token);
-                }
-                // TODO: Build expression
-                var fakeExpression = string.Join(" ", tokens.Select(t => t.Content));
-                AssignToken assignToken = new(parent, leftHandToken, fakeExpression, ++_statementCounter);
-                return assignToken;
-                */
+            /*
+            CheckIfValidName(leftHandToken.Content);
+            List<ParserToken> tokens = new();
+            ParserToken token = tokenQueue.Dequeue();
+            while (tokenQueue.Count > 0 && token.Content != ";")
+            {
+                token = tokenQueue.Dequeue();
+                tokens.Add(token);
+            }
+            // TODO: Build expression
+            var fakeExpression = string.Join(" ", tokens.Select(t => t.Content));
+            AssignToken assignToken = new(parent, leftHandToken, fakeExpression, ++_statementCounter);
+            return assignToken;
+            */
             CheckIfValidName(leftHandToken.Content);
             Queue<ParserToken> tokens = new();
             ParserToken token = tokenQueue.Dequeue();
@@ -210,7 +319,6 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
             }
             // TODO: Build expression
             var fakeExpression = string.Join(" ", tokens.Select(t => t.Content));
-
 
             AssignToken assignToken = new(parent, leftHandToken, fakeExpression, ++_statementCounter);
             assignToken.Left = new ModifyVariableToken(assignToken, leftHandToken.Content);
@@ -233,10 +341,12 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
                 leftToken = new ExpresionTokenPriority();
                 //variable or expression
                 var refToken = tokens.Dequeue();
-                if(refToken.Content == "("){
+                if (refToken.Content == "(")
+                {
                     leftToken.expresionToken = BuildExpressionToken(tokens).expresionToken;
                 }
-                else {
+                else
+                {
                     leftToken.expresionToken = BuildVariableToken(refToken);
                 }
                 //operator
@@ -249,7 +359,6 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
                 {
                     return leftToken;
                 }
-
             }
 
             while (tokens.Count > 0)
@@ -305,10 +414,13 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
             {
                 case "+":
                     return BuildPlusToken(leftExpr, rightExpr);
+
                 case "-":
                     return BuildMinusToken(leftExpr, rightExpr);
+
                 case "*":
                     return BuildTimesToken(leftExpr, rightExpr);
+
                 default:
                     throw new Exception("Not supported operator");
             }
@@ -316,22 +428,27 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
 
         private RefToken BuildVariableToken(ParserToken token)
         {
-            if (IsConstant(token.Content)) {
+            if (IsConstant(token.Content))
+            {
                 return new ConstantToken(token.Content);
-            } else {
+            }
+            else
+            {
                 return new VariableToken(null, token.Content, GetTestValue(token.Content));
             }
         }
-        Int64 GetTestValue(String variableName)
+
+        private Int64 GetTestValue(String variableName)
         {
             int value = 0;
             //forgive me
-            foreach(byte c in variableName)
+            foreach (byte c in variableName)
             {
                 value += c;
             }
             return value;
         }
+
         private ExpressionToken BuildPlusToken(ExpressionToken leftToken, ExpressionToken rightToken)
         {
             var expr = new PlusToken(String.Format("<+,{0},{1}>", leftToken.Content, rightToken.Content));
@@ -346,6 +463,7 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
             expr.UsesConstants.UnionWith(rightToken.UsesConstants);
             return expr;
         }
+
         private ExpressionToken BuildMinusToken(ExpressionToken leftToken, ExpressionToken rightToken)
         {
             var expr = new MinusToken(String.Format("<-,{0},{1}>", leftToken.Content, rightToken.Content));
@@ -360,6 +478,7 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
             expr.UsesConstants.UnionWith(rightToken.UsesConstants);
             return expr;
         }
+
         private ExpressionToken BuildTimesToken(ExpressionToken leftToken, ExpressionToken rightToken)
         {
             var expr = new TimesToken(String.Format("<*,{0},{1}>", leftToken.Content, rightToken.Content));
