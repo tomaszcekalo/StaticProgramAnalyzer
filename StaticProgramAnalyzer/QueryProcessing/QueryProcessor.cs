@@ -201,20 +201,22 @@ namespace StaticProgramAnalyzer.QueryProcessing
             }
             if (condition.StartsWith("pattern"))
             {
+                var pqlVar = parameters[0].Split(' ')[1];
                 if (parametersArray.Length > 2)
                 {
-                    return Pattern(combinations, parametersArray[0], parametersArray[1], parametersArray[2]);
+                    return Pattern(combinations, pqlVar, parametersArray[0], parametersArray[1], parametersArray[2]);
                 } else
                 {
-                    return Pattern(combinations, parametersArray[0], parametersArray[1]);
+                    return Pattern(combinations, pqlVar, parametersArray[0], parametersArray[1]);
                 }
             }
 
             return combinations;
         }
 
-        private IEnumerable<Dictionary<string, IToken>> Pattern(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right, string rightestRight=null)
+        private IEnumerable<Dictionary<string, IToken>> Pattern(IEnumerable<Dictionary<string, IToken>> combinations, string pqlVariable, string left, string right, string rightestRight=null)
         {
+            pqlVariable = pqlVariable.Trim();
             left = left.Replace("\"", "").Trim();
             right = right.Replace("\"", "").Trim();
             bool exactMatch = !(right.StartsWith("_") && right.EndsWith("_") && right.Length > 1);
@@ -230,64 +232,60 @@ namespace StaticProgramAnalyzer.QueryProcessing
             KnowledgeBuilder kb = new KnowledgeBuilder(parser);
             return combinations.Where(x =>
             {
-                foreach(var token in x.Values)
+                var token = x[pqlVariable];
+                if (token is WhileToken)
                 {
-                    if (token is WhileToken)
+                    if (left == "_" || (token as WhileToken).VariableName.Equals(left)) {
+                        return true;
+                    } else
                     {
-                        if (left == "_" || (token as WhileToken).VariableName.Equals(left)) {
-                            return true;
-                        } else
-                        {
-                            return false;
-                        }
+                        return false;
                     }
-                    else if(token is IfThenElseToken)
+                }
+                else if(token is IfThenElseToken)
+                {
+                    if (left == "_" || (token as IfThenElseToken).VariableName.Equals(left))
                     {
-                        if (left == "_" || (token as IfThenElseToken).VariableName.Equals(left))
-                        {
-                            return true;
-                        }
-                        else
-                        {
-                            return false;
-                        }
-                    } else if(token is AssignToken)
+                        return true;
+                    }
+                    else
                     {
-                        var at = token as AssignToken;
-                        if(left == "_" && right == "_")
+                        return false;
+                    }
+                } else if(token is AssignToken)
+                {
+                    var at = token as AssignToken;
+                    if(left == "_" && right == "_")
+                    {
+                        return true;
+                    }
+                    bool variableMatch = left == "_" || at.Left.VariableName.Equals(left);
+                    if (variableMatch)
+                    {
+                        bool astMatch = right == "_";
+                        if (astMatch == false)
                         {
-                            return true;
-                        }
-                        bool variableMatch = left == "_" || at.Left.VariableName.Equals(left);
-                        if (variableMatch)
-                        {
-                            bool astMatch = right == "_";
-                            if (astMatch == false)
+                            var pqlAst = kb.BuildAssignTokenFromString(right);
+                            if (exactMatch)
                             {
-                                var pqlAst = kb.BuildAssignTokenFromString(right);
-                                if (exactMatch)
-                                {
-                                    return at.EqualsTree(pqlAst);
-                                }
-                                else
-                                {
-                                    return at.ContainsTree(pqlAst);
-                                }
-                            } else
+                                return at.EqualsTree(pqlAst);
+                            }
+                            else
                             {
-                                return true;
+                                return at.ContainsTree(pqlAst);
                             }
                         } else
                         {
-                            return false;
+                            return true;
                         }
                     } else
                     {
-                        throw new Exception("Unsupported token");
+                        return false;
                     }
-                    return false;
+                } else
+                {
+                    throw new Exception("Unsupported token");
                 }
-                return true;
             }).ToList();
         }
 
