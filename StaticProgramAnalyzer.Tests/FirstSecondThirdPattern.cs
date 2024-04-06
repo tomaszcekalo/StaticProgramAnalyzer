@@ -208,5 +208,14 @@ namespace StaticProgramAnalyzer.Tests
         {
             Assert.IsTrue(processor.ProcessQuery("assign a; while w", "Select a such that Parent(w, a) and pattern a(_,\"x+y\") and pattern w(\"k\",_)").Equals("15"));
         }
+        /// <summary>
+        /// find assigments that are in while controled by c
+        /// should return none
+        /// </summary>
+        [TestMethod]
+        public void PatternTestAssignMultiParentWANone()
+        {
+            Assert.IsTrue(processor.ProcessQuery("assign a; while w", "Select a such that Parent(w, a) and pattern a(_,_) and pattern w(\"c\",_)").Equals(""));
+        }
     }
 }
