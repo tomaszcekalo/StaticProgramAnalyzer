@@ -11,5 +11,7 @@ namespace StaticProgramAnalyzer
         public IEnumerable<IToken> TokenList { get; internal set; }
         public Dictionary<string, HashSet<string>> CallsDirectly { get; set; }
         public Dictionary<string, HashSet<string>> AllCalls { get; set; }
+        public Dictionary<string, HashSet<IToken>> AllModifies { get; internal set; }
+        public Dictionary<string, HashSet<IToken>> AllUses { get; internal set; }
     }
 }
