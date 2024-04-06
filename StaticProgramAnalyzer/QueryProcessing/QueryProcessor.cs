@@ -16,9 +16,9 @@ namespace StaticProgramAnalyzer.QueryProcessing
 
     public class QueryProcessor : IQueryProcessor
     {
-        private ProgramKnowledgeBase _pkb;
+        private readonly ProgramKnowledgeBase _pkb;
         private readonly IQueryResultProjector projector;
-        private char[] _whitespace = new char[] { ' ', '\t', '\n', '\r', ',' };
+        private readonly char[] _whitespace = new char[] { ' ', '\t', '\n', '\r', ',' };
 
         public QueryProcessor(ProgramKnowledgeBase pkb, IQueryResultProjector projector)
         {
@@ -200,7 +200,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
             }
             left = left.Trim();
             right = right.Trim();
-            return combinations.Where(x =>
+            var result= combinations.Where(x =>
             {
                 //for all parents of right
                 var parent = x[left];
@@ -211,7 +211,8 @@ namespace StaticProgramAnalyzer.QueryProcessing
                     parent = parent.Parent;
                 }
                 return false;
-            });
+            }).Distinct().ToList();
+            return result;
         }
 
         private IEnumerable<Dictionary<string, IToken>> Modifies(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
@@ -257,9 +258,10 @@ namespace StaticProgramAnalyzer.QueryProcessing
                             && x.Parent == c[left]);
                 }).ToList();
             }
-            return combinations.Where(x =>
-                (x[right.Trim()] as StatementToken)?.Parent == x[left.Trim()]
-            );
+            var result = combinations.Where(x =>
+                (x[right.Trim()] as StatementToken)?.Parent == x[left.Trim()])
+                .ToList();
+            return result;
         }
 
         public IEnumerable<Dictionary<string, IToken>> CallsStar(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
@@ -360,10 +362,6 @@ namespace StaticProgramAnalyzer.QueryProcessing
             else if (type == "assign")
             {
                 return new IsAssignPredicate();
-            }
-            else if (type == "while")
-            {
-                return new IsWhilePredicate();
             }
             else if (type == "constant")
             {

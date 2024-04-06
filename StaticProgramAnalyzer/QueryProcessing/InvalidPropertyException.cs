@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace StaticProgramAnalyzer.QueryProcessing
 {
     [Serializable]
-    internal class InvalidPropertyException : Exception
+    public class InvalidPropertyException : Exception
     {
         public InvalidPropertyException()
         {
