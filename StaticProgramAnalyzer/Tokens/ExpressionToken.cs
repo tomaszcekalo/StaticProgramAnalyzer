@@ -24,9 +24,9 @@ namespace StaticProgramAnalyzer.Tokens
             return new List<IToken>();
         }
 
-        public IEnumerable<IToken> GetChildren()
+        public IEnumerable<StatementToken> GetChildren()
         {
-            return new List<IToken>();
+            return null;
         }
     }
 }

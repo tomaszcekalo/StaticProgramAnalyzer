@@ -6,7 +6,7 @@ using System.Text;
 
 namespace StaticProgramAnalyzer.Tokens
 {
-    public class ProcedureToken : IHasProcedureName
+    public class ProcedureToken : IHasProcedureName, IDeterminesFollows
     {
         public string ProcedureName { get; set; }
         public List<StatementToken> StatementList { get; set; }
@@ -14,7 +14,17 @@ namespace StaticProgramAnalyzer.Tokens
         //public List<AssignToken> AssigmentList { get; set; }
         public IToken Parent { get => null; set { } }
 
-        public IEnumerable<IToken> GetChildren()
+        public bool Follows(StatementToken left, StatementToken right)
+        {
+            return StatementList.IndexOf(left) == StatementList.IndexOf(right) - 1;
+        }
+
+        public bool FollowsStar(StatementToken left, StatementToken right)
+        {
+            return StatementList.IndexOf(left) < StatementList.IndexOf(right);
+        }
+
+        public IEnumerable<StatementToken> GetChildren()
         {
             return StatementList;
         }

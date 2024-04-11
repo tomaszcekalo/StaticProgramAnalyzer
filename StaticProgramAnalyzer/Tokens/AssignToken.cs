@@ -59,9 +59,10 @@ namespace StaticProgramAnalyzer.Tokens
                 }
             }
         }
-        public override IEnumerable<IToken> GetChildren()
+        public override IEnumerable<StatementToken> GetChildren()
         {
-            return VariablesAndConstants;
+            //return VariablesAndConstants;
+            return null;
         }
 
         public override IEnumerable<IToken> GetDescentands()

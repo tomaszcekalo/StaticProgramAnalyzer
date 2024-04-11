@@ -13,9 +13,9 @@ namespace StaticProgramAnalyzer.Tokens
 
         public string ProcedureName { get; set; }
 
-        public override IEnumerable<IToken> GetChildren()
+        public override IEnumerable<StatementToken> GetChildren()
         {
-            return new List<IToken>();
+            return null;
         }
 
         public override IEnumerable<IToken> GetDescentands()

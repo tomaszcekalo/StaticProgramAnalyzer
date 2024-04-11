@@ -2,12 +2,8 @@
 using StaticProgramAnalyzer.Tokens;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics.Contracts;
 using System.Linq;
-using System.Net.Http.Headers;
-using System.Runtime.ExceptionServices;
-using System.Text;
 
 namespace StaticProgramAnalyzer.KnowledgeBuilding
 {
@@ -64,7 +60,7 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
 
             var result = directModifies
                 .GroupBy(x => x.VariableName)
-                .ToDictionary(x => x.Key, x => x.Select(t=> t.Item2).ToHashSet());
+                .ToDictionary(x => x.Key, x => x.Select(t => t.Item2).ToHashSet());
 
             if (directModifies.Any())
             {
@@ -122,7 +118,7 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
 
         public Dictionary<string, HashSet<IToken>> GetAllUses(ProgramKnowledgeBase pkb)
         {
-            var directUses= pkb.ProceduresTree
+            var directUses = pkb.ProceduresTree
                 .SelectMany(x => x.GetDescentands().OfType<IUseVariableToken>())
                 .Select(x => (x.VariableName, x as IToken));
 
@@ -233,6 +229,19 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
                 ParserToken token = tokenQueue.Dequeue();
                 if (token.Content == "}")
                 {
+                    // TODO: add "next" relations between statements
+                    for (int i = 1; i < result.Count; i++)
+                    {
+                        if (result[i - 1] is IfThenElseToken ifelse)
+                        {
+                            ifelse.Then.Last().Next.Add(result[i]);
+                            ifelse.Else.Last().Next.Add(result[i]);
+                            continue;
+                        }
+                        result[i - 1].Next.Add(result[i]);
+                    }
+                    // Note To Self - don't do it for IF statements, only for the THEN and ELSE parts - or rather last items in their statement lists
+
                     return result;
                 }
                 else if (token.Content == "if")
@@ -256,9 +265,10 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
                     throw new Exception("Unexpected token: " + token.Content);
                 }
             }
+            
             return result;
         }
-      
+
         public class ExpresionTokenPriority
         {
             public static Dictionary<String, int> operatorPriorityDict = new Dictionary<string, int>(){
@@ -522,6 +532,10 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
             token = tokenQueue.Dequeue();
             Contract.Assert(token.Content == "{");
             whileToken.StatementList = this.GetStatementList(whileToken, tokenQueue);
+            // TODO: add a "next" relation from while to the first item in it's statement list
+            whileToken.Next.Add(whileToken.StatementList.First());
+            // TODO: for last item in the while's statement list, add a "next" relation to the while statement
+            whileToken.StatementList.Last().Next.Add(whileToken);
             return whileToken;
         }
 
@@ -536,18 +550,22 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
             token = tokenQueue.Dequeue();
             Contract.Assert(token.Content == "{");
             ifToken.Then = this.GetStatementList(ifToken, tokenQueue);
+            // TODO: add a "next" relation from IF to the first item in it's THEN statement list
+            ifToken.Next.Add(ifToken.Then.First());
             token = tokenQueue.Dequeue();
             Contract.Assert(token.Content == "else");
             token = tokenQueue.Dequeue();
             Contract.Assert(token.Content == "{");
             ifToken.Else = this.GetStatementList(ifToken, tokenQueue);
+            // TODO: add a "next" relation from IF to the first item in it's ELSE statement list
+            ifToken.Next.Add(ifToken.Else.First());
             return ifToken;
         }
 
         public AssignToken BuildAssignTokenFromString(string right)
         {
             AssignToken assignToken = new AssignToken();
-            if(right.EndsWith(";") == false)
+            if (right.EndsWith(";") == false)
             {
                 right += ";";
             }

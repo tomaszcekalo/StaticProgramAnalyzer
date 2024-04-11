@@ -541,7 +541,93 @@ namespace StaticProgramAnalyzer.Tests
             //Assert
             Assert.AreEqual("none", result);
         }
-
-
+        //[TestMethod]
+        //public void FollowsAllPossible()
+        //{
+        //    //Arrange
+        //    var pkb = treeBuilder.GetPKB(tokens);
+        //    var processor = new QueryProcessor(pkb, new QueryResultProjector());
+        //    //Act
+        //    var result = processor.ProcessQuery("stmt s1, s2;", "Select <s1, s2> such that Follows(s1,s2)");
+        //    //Assert
+        //    Assert.AreEqual("1 2, 2 3, 4 5, 5 6, 7 8, 8 9, 6 10, 10 13, 13 14, 14 15, 16 17", result);
+        //}
+        //[TestMethod]
+        //public void FollowsStarAllPossible()
+        //{
+        //    //Arrange
+        //    var pkb = treeBuilder.GetPKB(tokens);
+        //    var processor = new QueryProcessor(pkb, new QueryResultProjector());
+        //    //Act
+        //    var result = processor.ProcessQuery("stmt s1, s2;", "Select <s1, s2> such that Follows*(s1,s2)");
+        //    //Assert
+        //    Assert.AreEqual("1 2, 1 3, 2 3, 4 5, 4 6, 5 6, 7 8, 7 9, 8 9, 4 10, 5 10, 6 10, 4 13, 5 13, 6 13, 10 13, 4 14, 5 14, 6 14, 10 14, 13 14, 4 15, 5 15, 6 15, 10 15, 13 15, 14 15, 16 17", result);
+        //}
+        //[TestMethod]
+        //public void FollowsThrees()
+        //{
+        //    //Arrange
+        //    var pkb = treeBuilder.GetPKB(tokens);
+        //    var processor = new QueryProcessor(pkb, new QueryResultProjector());
+        //    //Act
+        //    var result = processor.ProcessQuery("stmt s1, s2, s3;", "Select <s1, s2, s3> such that Follows(s1, s2) and Follows(s2, s3)");
+        //    //Assert
+        //    Assert.AreEqual("1 2 3, 4 5 6, 5 6 10, 7 8 9, 6 10 13, 10 13 14, 13 14 15", result);
+        //}
+        [TestMethod]
+        public void FollowsFours()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("stmt s1, s2, s3, s4;", "Select <s1,s2,s3,s4> such that Follows(s1,s2) and Follows(s2,s3) and Follows(s3,s4)");
+            //Assert
+            Assert.AreEqual("4 5 6 10, 5 6 10 13, 6 10 13 14, 10 13 14 15", result);
+        }
+        [TestMethod]
+        public void FollowsFives()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("stmt s1, s2, s3, s4, s5;", "Select <s1,s2,s3,s4,s5> such that Follows(s1,s2) and Follows(s2,s3) and Follows(s3,s4) and Follows(s4,s5)");
+            //Assert
+            Assert.AreEqual("4 5 6 10 13, 5 6 10 13 14, 6 10 13 14 15", result);
+        }
+        //[TestMethod]
+        //public void FollowsSixes()
+        //{
+        //    //Arrange
+        //    var pkb = treeBuilder.GetPKB(tokens);
+        //    var processor = new QueryProcessor(pkb, new QueryResultProjector());
+        //    //Act
+        //    var result = processor.ProcessQuery("stmt s1, s2, s3, s4, s5, s6;", "Select <s1,s2,s3,s4,s5,s6> such that Follows(s1,s2) and Follows(s2,s3) and Follows(s3,s4) and Follows(s4,s5) and Follows(s5,s6)");
+        //    //Assert
+        //    Assert.AreEqual("4 5 6 10 13 14, 5 6 10 13 14 15", result);
+        //}
+        //[TestMethod]
+        //public void FollowsSevens()
+        //{
+        //    //Arrange
+        //    var pkb = treeBuilder.GetPKB(tokens);
+        //    var processor = new QueryProcessor(pkb, new QueryResultProjector());
+        //    //Act
+        //    var result = processor.ProcessQuery("stmt s1, s2, s3, s4, s5, s6, s7;", "Select <s1,s2,s3,s4,s5,s6,s7> such that Follows(s1,s2) and Follows(s2,s3) and Follows(s3,s4) and Follows(s4,s5) and Follows(s5,s6) and Follows(s6,s7)");
+        //    //Assert
+        //    Assert.AreEqual("4 5 6 10 13 14 15", result);
+        //}
+        //[TestMethod]
+        //public void NextPairs()
+        //{
+        //    //Arrange
+        //    var pkb = treeBuilder.GetPKB(tokens);
+        //    var processor = new QueryProcessor(pkb, new QueryResultProjector());
+        //    //Act
+        //    var result = processor.ProcessQuery("stmt s1, s2;", "Select <s1,s2> such that Next(s1,s2)");
+        //    //Assert
+        //    Assert.AreEqual("1 2, 2 3, 4 5, 5 6, 9 6, 6 7, 7 8, 8 9, 6 10, 10 11, 10 12, 11 13, 12 13, 13 14, 14 15, 16 17", result);
+        //}
     }
 }

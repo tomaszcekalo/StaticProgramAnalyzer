@@ -12,20 +12,26 @@ namespace StaticProgramAnalyzer.Tokens
             this.Parent = parent;
             Source = source;
             StatementNumber = statementNumber;
+            Next = new List<StatementToken>();
         }
-
 
         public abstract IEnumerable<IToken> GetDescentands();
 
-        public abstract IEnumerable<IToken> GetChildren();
+        public abstract IEnumerable<StatementToken> GetChildren();
 
         public IToken Parent { get; set; }
         public ParserToken Source { get; set; }
         public int StatementNumber { get; set; }
+
         public override string ToString()
         {
             return StatementNumber.ToString();
-            //return Source.LineNumber.ToString();
+        }
+
+        public List<StatementToken> Next { get; set; }
+        public virtual void AddNext(StatementToken next)
+        {
+            Next.Add(next);
         }
     }
 }
