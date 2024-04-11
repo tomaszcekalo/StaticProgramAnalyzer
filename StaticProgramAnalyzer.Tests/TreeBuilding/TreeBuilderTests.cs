@@ -84,29 +84,29 @@ y = (a+b*c)*(e*d)*f+k;
             foreach(var asch in assigmentChecks)
             {
                 foreach (var tree in asch.trueTree) {
-                    Assert.IsTrue(
+                    Assert.AreEqual(
                         assigmentList[asch.numberOfassigment].ContainsTree(
                             tb.BuildAssignmentStatement(new ProcedureToken(), new ParserToken() { Content= "y" }, 
                                 new Queue<ParserToken>(parser.Parse(["=" + tree + ";"]))
                             ) as AssignToken
-                        )
+                        ), true
                     );
                 }
                 foreach (var tree in asch.falseTree)
                 {
-                    Assert.IsFalse(
+                    Assert.AreEqual(
                         assigmentList[asch.numberOfassigment].ContainsTree(
                             tb.BuildAssignmentStatement(new ProcedureToken(), new ParserToken() { Content = "y" },
                                 new Queue<ParserToken>(parser.Parse(["=" + tree + ";"]))
                             ) as AssignToken
-                        )
+                        ), false
                     );
                 }
             }
             QueryResultProjector qrp = new QueryResultProjector();
             QueryProcessor qp = new QueryProcessor(pkb, qrp);
-            Assert.IsTrue(qp.ProcessQuery("stmt a1", "Select a1 such that Uses(a1, \"k\")")=="4");
-            Assert.IsFalse(qp.ProcessQuery("stmt a1", "Select a1 such that Uses(a1, \"k\")") == "1");
+            Assert.AreEqual(qp.ProcessQuery("stmt a1", "Select a1 such that Uses(a1, \"k\")"),"4");
+            Assert.AreNotEqual(qp.ProcessQuery("stmt a1", "Select a1 such that Uses(a1, \"k\")"),"1");
         }
 
     }
