@@ -37,7 +37,14 @@ namespace StaticProgramAnalyzer.Console
                     var select = System.Console.ReadLine();
                     logFileWriter.WriteLine($"{select} ");
                     logFileWriter.Flush();
-                    System.Console.WriteLine(processor.ProcessQuery(declarations, select));
+                    try
+                    {
+                        System.Console.WriteLine(processor.ProcessQuery(declarations, select));
+                    }
+                    catch(Exception ex)
+                    {
+                        System.Console.WriteLine(ex.Message);
+                    }
                 }
             }
         }
