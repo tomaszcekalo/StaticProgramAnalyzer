@@ -1,4 +1,7 @@
-﻿using System;
+﻿using StaticProgramAnalyzer.KnowledgeBuilding;
+using StaticProgramAnalyzer.Parsing;
+using StaticProgramAnalyzer.QueryProcessing;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -44,5 +47,34 @@ a = t * a + d + k * b; }}
 c = t + k + d; }
 procedure Hexagon {
 t = a + t; }";
+
+        private Parser parser;
+
+        private string[] lines;
+        private List<ParserToken> tokens;
+        private KnowledgeBuilder treeBuilder;
+        private ProgramKnowledgeBase pkb;
+        private QueryProcessor processor;
+
+        [TestInitialize]
+        public void Initialize()
+        {
+            parser = new Parser();
+
+            lines = _program.Split(Environment.NewLine);
+            tokens = parser.Parse(lines);
+            treeBuilder = new KnowledgeBuilder(parser);
+            pkb = treeBuilder.GetPKB(tokens);
+            processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //var pro = treeBuilder.GetProcedures(tokens);
+        }
+
+        [TestMethod]
+        public void FollowsT1()
+        {
+            //Act
+            Assert.AreEqual(processor.ProcessQuery("assign a;", "Select a such that Follows(1, a)"), "2");
+        }
     }
+
 }
