@@ -5,6 +5,7 @@ using StaticProgramAnalyzer.Tokens;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 
 namespace StaticProgramAnalyzer.QueryProcessing
@@ -18,6 +19,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
 
     public class QueryProcessor : IQueryProcessor
     {
+        static Dictionary<String, AssignToken> astDict = new Dictionary<string, AssignToken>();
         private readonly ProgramKnowledgeBase _pkb;
         private readonly IQueryResultProjector projector;
         private readonly char[] _whitespace = new char[] { ' ', '\t', '\n', '\r', ',' };
@@ -85,7 +87,8 @@ namespace StaticProgramAnalyzer.QueryProcessing
                 }));
             }
             //just because we can't be sure if there's no variable named "pattern"
-            Regex regex = new Regex("pattern [^(]+\\([^,]+,[^,)]+(,[^)]+)?\\)");
+            //Regex regex = new Regex("pattern [^(]+\\([^,]+,[^,)]+(,[^)]+)?\\)");
+            Regex regex = new Regex("pattern [^(]+\\([ ]*((_?(\\\"[^\\\"]+\\\")?_?))[ ]*,([ ]*((_?(\\\"[^\\\"]+\\\")?_?))[ ]*,?[ ]*)+[ ]*\\)");
             String withoutPattern = regex.Replace(selects, "");
             MatchCollection mc = regex.Matches(selects);
             IEnumerable<String> matches = mc.Select(x => x.Value);
@@ -164,8 +167,17 @@ namespace StaticProgramAnalyzer.QueryProcessing
             IEnumerable<Dictionary<string, IToken>> combinations,
             string condition)
         {
-            var parameters = condition.Split(new char[] { '(', ')' },
-                StringSplitOptions.RemoveEmptyEntries);
+            int startB = condition.IndexOf('(');
+            int stopB = condition.LastIndexOf(')');
+            //var parameters2 = condition.Split(new char[] { '(', ')' }, StringSplitOptions.RemoveEmptyEntries);
+            String[] parameters;
+            if (startB >= 0 && stopB >= 0)
+            {
+                parameters = new[] { condition.Substring(0, startB), condition.Substring(startB + 1, (stopB - startB - 1)) };//, condition.Substring(stopB+1)};
+            } else
+            {
+                parameters = new[] { condition }; 
+            }
             var parametersArray = parameters.Last().Split(',', StringSplitOptions.RemoveEmptyEntries);
             if (condition.Contains("="))
             {
@@ -368,7 +380,12 @@ namespace StaticProgramAnalyzer.QueryProcessing
                         bool astMatch = right == "_";
                         if (astMatch == false)
                         {
-                            var pqlAst = kb.BuildAssignTokenFromString(right);
+                            AssignToken pqlAst;
+                            if (astDict.TryGetValue(right, out pqlAst) == false)
+                            {
+                                pqlAst = kb.BuildAssignTokenFromString(right);
+                                astDict.TryAdd(right, pqlAst);
+                            }
                             if (exactMatch)
                             {
                                 return at.EqualsTree(pqlAst);

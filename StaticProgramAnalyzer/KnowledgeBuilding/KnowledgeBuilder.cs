@@ -569,7 +569,14 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
             {
                 right += ";";
             }
-            assignToken.Right = BuildExpressionToken(new Queue<ParserToken>(Parser.Parse(new String[] { right }))).expresionToken;
+            // x here is OK, there's need to full expresion to parse it corectly
+            right = "x=" + right;
+            var parsed = Parser.Parse(new String[] { right });
+            var queue = new Queue<ParserToken>(parsed);
+            //and now we have to drop "x=" ^>^
+            queue.Dequeue();
+            queue.Dequeue();
+            assignToken.Right = BuildExpressionToken(queue).expresionToken;
             return assignToken;
         }
     }
