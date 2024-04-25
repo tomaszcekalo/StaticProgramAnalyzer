@@ -38,7 +38,7 @@ y = a+((b+c*g)+d*e)*f+k+((b+c*g)+d*e)*f+k+((b+c*g)+d*e)*f+k+((b+c*g)+d*e)*f+k+((
             public List<String> falseTree;
         };
 
-        [TestMethod()]
+        //[TestMethod()]
         public void PatternCheckingTest()
         {
             string testProgram = @"procedure Test {

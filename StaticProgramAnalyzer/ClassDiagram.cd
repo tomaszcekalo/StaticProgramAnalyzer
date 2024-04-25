@@ -1,0 +1,64 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ClassDiagram MajorVersion="1" MinorVersion="1">
+  <Class Name="StaticProgramAnalyzer.Parsing.ParserToken">
+    <Position X="4" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAgAAAAAkAAAIAAAAAAAAAAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Parsing\ParserToken.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StaticProgramAnalyzer.Parsing.Parser">
+    <Position X="2" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>BAAgQBAAAAAAgAAAAAAgAABAAAAAAAAEQAAAgEAAAAQ=</HashCode>
+      <FileName>Parsing\Parser.cs</FileName>
+    </TypeIdentifier>
+  </Class>
+  <Class Name="StaticProgramAnalyzer.Tokens.CallToken" Collapsed="true">
+    <Position X="9.75" Y="2.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAAAAAAAAAAAAAQAAAACAAAAAAAAA=</HashCode>
+      <FileName>Tokens\CallToken.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="StaticProgramAnalyzer.Tokens.IfThenElseToken" Collapsed="true">
+    <Position X="10" Y="6.25" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAABAAAAAAAAAAQEAAAAAAAAASAAAAAAAAACAAAA=</HashCode>
+      <FileName>Tokens\IfThenElseToken.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="StaticProgramAnalyzer.Tokens.ProcedureToken" Collapsed="true">
+    <Position X="6.75" Y="5.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAgAAAAAEAAAAQAAAAAAESAAAACAAAACAAAA=</HashCode>
+      <FileName>Tokens\ProcedureToken.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Class Name="StaticProgramAnalyzer.Tokens.WhileToken" Collapsed="true">
+    <Position X="12.25" Y="6.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAAAAAAAAAAEAAAAAAAAESAAAAAAAAACAAAA=</HashCode>
+      <FileName>Tokens\WhileToken.cs</FileName>
+    </TypeIdentifier>
+    <Lollipop Position="0.2" />
+  </Class>
+  <Interface Name="StaticProgramAnalyzer.Tokens.IToken">
+    <Position X="7" Y="1.75" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAACAAAAAgAAAAAAAAAAQAAAAAAAQAAAAAAAAAAAAAA=</HashCode>
+      <FileName>Tokens\IToken.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Interface Name="StaticProgramAnalyzer.Tokens.IHasProcedureName" Collapsed="true">
+    <Position X="8.75" Y="4.5" Width="1.5" />
+    <TypeIdentifier>
+      <HashCode>AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAAAAAAAA=</HashCode>
+      <FileName>Tokens\IHasProcedureName.cs</FileName>
+    </TypeIdentifier>
+  </Interface>
+  <Font Name="Segoe UI" Size="9" />
+</ClassDiagram>

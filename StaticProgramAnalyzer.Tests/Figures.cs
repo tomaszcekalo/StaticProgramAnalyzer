@@ -66,7 +66,6 @@ t = a + t; }";
             treeBuilder = new KnowledgeBuilder(parser);
             pkb = treeBuilder.GetPKB(tokens);
             processor = new QueryProcessor(pkb, new QueryResultProjector());
-            //var pro = treeBuilder.GetProcedures(tokens);
         }
 
         [TestMethod]
@@ -74,6 +73,12 @@ t = a + t; }";
         {
             //Act
             Assert.AreEqual(processor.ProcessQuery("assign a;", "Select a such that Follows(1, a)"), "2");
+        }
+        [TestMethod]
+        public void FollowsT2()
+        {
+            //Act
+            Assert.AreEqual(processor.ProcessQuery("assign a;", "Select a such that Follows(a, 2)"), "1");
         }
     }
 

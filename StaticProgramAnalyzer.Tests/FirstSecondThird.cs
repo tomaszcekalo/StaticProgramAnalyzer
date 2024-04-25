@@ -1,6 +1,7 @@
 ﻿using StaticProgramAnalyzer.KnowledgeBuilding;
 using StaticProgramAnalyzer.Parsing;
 using StaticProgramAnalyzer.QueryProcessing;
+using System.Diagnostics;
 
 namespace StaticProgramAnalyzer.Tests
 {
@@ -541,6 +542,17 @@ namespace StaticProgramAnalyzer.Tests
             //Assert
             Assert.AreEqual("none", result);
         }
+        [TestMethod]
+        public void UsesVariable()
+        {
+            //Arrange
+            var pkb=treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result=processor.ProcessQuery("variable v; assign a;", "Select v such that Uses(a, v)");
+            //Assert
+            Assert.AreEqual("x, z, i, y", result);
+        }
         //[TestMethod]
         //public void FollowsAllPossible()
         //{
@@ -629,5 +641,16 @@ namespace StaticProgramAnalyzer.Tests
         //    //Assert
         //    Assert.AreEqual("1 2, 2 3, 4 5, 5 6, 9 6, 6 7, 7 8, 8 9, 6 10, 10 11, 10 12, 11 13, 12 13, 13 14, 14 15, 16 17", result);
         //}
+        [TestMethod]
+        public void FollowsT12()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("assign a;", "Select a such that Follows(1, 2)");
+            //Assert
+            Assert.AreEqual("1, 2, 4, 5, 7, 9, 11, 12, 13, 14, 15, 16, 17", result);
+        }
     }
 }

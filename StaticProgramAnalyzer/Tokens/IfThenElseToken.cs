@@ -27,6 +27,67 @@ namespace StaticProgramAnalyzer.Tokens
             return false;
         }
 
+        public bool Follows(int statementNumber, StatementToken right)
+        {
+            if (Then.Contains(right))
+            {
+                var index = Then.IndexOf(right);
+                if (index == 0)
+                    return false;
+                return Then[index - 1].StatementNumber == statementNumber;
+            }
+            if (Else.Contains(right))
+            {
+                var index = Else.IndexOf(right);
+                if (index == 0)
+                    return false;
+                return Else[index - 1].StatementNumber == statementNumber;
+            }
+            return false;
+
+        }
+
+        public bool Follows(StatementToken left, int statementNumber)
+        {
+            if(Then.Contains(left))
+            {
+                var index = Then.IndexOf(left);
+                if (index == Then.Count - 1)
+                    return false;
+                return Then[index + 1].StatementNumber == statementNumber;
+            }
+            if (Else.Contains(left))
+            {
+                var index = Else.IndexOf(left);
+                if (index == Else.Count - 1)
+                    return false;
+                return Else[index + 1].StatementNumber == statementNumber;
+            }
+            return false;
+        }
+
+        public bool Follows(int leftStatementNumber, int rightStatementNumber)
+        {
+            StatementToken left = null;
+            left = Then.Find(t => t.StatementNumber == leftStatementNumber);
+            if (left != null)
+            {
+                var index = Then.IndexOf(left);
+                if (index == Then.Count - 1)
+                    return false;
+                return Then[index + 1].StatementNumber == rightStatementNumber;
+            }
+            left = Else.Find(t => t.StatementNumber == leftStatementNumber);
+            if (left != null)
+            {
+                var index = Else.IndexOf(left);
+                if (index == Else.Count - 1)
+                    return false;
+                return Else[index + 1].StatementNumber == rightStatementNumber;
+            }
+            return false;
+        }
+
         public bool FollowsStar(StatementToken left, StatementToken right)
         {
             if (Then.Contains(left) && Then.Contains(right))
