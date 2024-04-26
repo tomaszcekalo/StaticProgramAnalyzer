@@ -20,7 +20,7 @@ namespace StaticProgramAnalyzer.Tokens
 
         public bool Follows(int statementNumber, StatementToken right)
         {
-            var specifiedStatement= StatementList.Find(x => x.StatementNumber == statementNumber);
+            var specifiedStatement = StatementList.Find(x => x.StatementNumber == statementNumber);
             if (specifiedStatement == null)
                 return false;
             return Follows(specifiedStatement, right);
@@ -45,6 +45,37 @@ namespace StaticProgramAnalyzer.Tokens
 
         public bool FollowsStar(StatementToken left, StatementToken right)
         {
+            return StatementList.IndexOf(left) < StatementList.IndexOf(right);
+        }
+
+        public bool FollowsStar(int statementNumber, StatementToken right)
+        {
+            var left = StatementList.Find(x => x.StatementNumber == statementNumber);
+            if (left != null)
+            {
+                return FollowsStar(left, right);
+            }
+            return false;
+        }
+
+        public bool FollowsStar(StatementToken left, int statementNumber)
+        {
+            var right = StatementList.Find(x => x.StatementNumber == statementNumber);
+            if (right != null)
+            {
+                return FollowsStar(left, right);
+            }
+            return false;
+        }
+
+        public bool FollowsStar(int leftStatementNumber, int rightStatementNumber)
+        {
+            var left = StatementList.Find(x => x.StatementNumber == leftStatementNumber);
+            var right = StatementList.Find(x => x.StatementNumber == rightStatementNumber);
+            if (left is null || right is null)
+            {
+                return false;
+            }
             return StatementList.IndexOf(left) < StatementList.IndexOf(right);
         }
 

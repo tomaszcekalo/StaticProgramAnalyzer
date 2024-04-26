@@ -253,18 +253,18 @@ namespace StaticProgramAnalyzer.Tests
             Assert.AreEqual("First", result);
         }
 
-        //[TestMethod]
-        //public void FindProgLine()
-        //{
-        //    //Q12. Which statements contain a statement (at stmt#=”n”) that can be executed after line 10?
-        //    //Arrange
-        //    var pkb = treeBuilder.GetPKB(tokens);
-        //    var processor = new QueryProcessor(pkb, new QueryResultProjector());
-        //    //Act
-        //    var result = processor.ProcessQuery("prog_line n; stmt s;", "Select s such that Next* (10, n) and Parent* (s, n) ");
-        //    //Assert
-        //    Assert.AreEqual("10", result);
-        //}
+        [TestMethod]
+        public void FindProgLine()
+        {
+            //Q12. Which statements contain a statement (at stmt#=”n”) that can be executed after line 10?
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("prog_line n; stmt s;", "Select s such that Next* (10, n) and Parent* (s, n) ");
+            //Assert
+            Assert.AreEqual("10", result);
+        }
 
         [TestMethod]
         public void FindStatementNumberIsEqualTosomeConstant()
@@ -651,6 +651,61 @@ namespace StaticProgramAnalyzer.Tests
             var result = processor.ProcessQuery("assign a;", "Select a such that Follows(1, 2)");
             //Assert
             Assert.AreEqual("1, 2, 4, 5, 7, 9, 11, 12, 13, 14, 15, 16, 17", result);
+        }
+        [TestMethod]
+        public void FollowsStar1()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("assign a;", "Select a such that Follows*(1, a)");
+            //Assert
+            Assert.AreEqual("2", result);
+        }
+        [TestMethod]
+        public void FollowsStar2()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("assign a;", "Select a such that Follows*(a, 2)");
+            //Assert
+            Assert.AreEqual("1", result);
+        }
+        [TestMethod]
+        public void ModifiesW()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("procedure p;", "Select p such that Modifies (p, \"w\")");
+            //Assert
+            Assert.AreEqual("none", result);
+        }
+        [TestMethod]
+        public void ProgLine1()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("prog_line n; stmt s;", "Select s such that Follows* (n, s) with n = 8");
+            //Assert
+            Assert.AreEqual("9", result);
+        }
+        [TestMethod]
+        public void ProgLine8()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("prog_line n; stmt s;", "Select s such that Follows* (n, s) with n = 1");
+            //Assert
+            Assert.AreEqual("2, 3", result);
         }
     }
 }

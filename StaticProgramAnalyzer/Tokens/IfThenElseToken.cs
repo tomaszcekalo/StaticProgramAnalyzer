@@ -97,6 +97,43 @@ namespace StaticProgramAnalyzer.Tokens
             return false;
         }
 
+        public bool FollowsStar(int statementNumber, StatementToken right)
+        {
+            var specifiedStatement=Then.Find(x=> x.StatementNumber == statementNumber);
+            if(specifiedStatement is not null)
+            {
+                return FollowsStar(specifiedStatement, right);
+            }
+            specifiedStatement=Else.Find(x=>x.StatementNumber==statementNumber);
+            if(specifiedStatement is not null)
+            {
+                return FollowsStar(specifiedStatement, right);
+            }
+            return false;
+        }
+
+        public bool FollowsStar(StatementToken left, int statementNumber)
+        {
+            var specifiedStatement=Then.Find(x=>x.StatementNumber == statementNumber);
+            if(specifiedStatement is not null)
+            {
+                return FollowsStar(left,specifiedStatement);
+            }
+            specifiedStatement = Else.Find(x => x.StatementNumber == statementNumber);
+            if(specifiedStatement is not null)
+            {
+                return FollowsStar(left, specifiedStatement);
+            }
+            return false;
+        }
+
+        public bool FollowsStar(int leftStatementNumber, int rightStatementNumber)
+        {
+            var left = GetChildren().FirstOrDefault(x => x.StatementNumber == leftStatementNumber);
+            var right = GetChildren().FirstOrDefault(x => x.StatementNumber == rightStatementNumber);
+            return FollowsStar(left, right);
+        }
+
         public override IEnumerable<StatementToken> GetChildren()
         {
             return Then.Concat(Else);

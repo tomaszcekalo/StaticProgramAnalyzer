@@ -122,7 +122,12 @@ namespace StaticProgramAnalyzer.QueryProcessing
         public IEnumerable<Dictionary<string, IToken>> FilterByParameter(IEnumerable<Dictionary<string, IToken>> combinations, string condition)
         {
             var array = condition.Split('=');
-
+            foreach(var x in combinations)
+            {
+                var zero = GetValueOrProperty(array[0], x);
+                var one = GetValueOrProperty(array[1], x);
+                var areEqual = zero == one;
+            }
             return combinations.Where(x => GetValueOrProperty(array[0], x) == GetValueOrProperty(array[1], x));
         }
 
@@ -139,6 +144,8 @@ namespace StaticProgramAnalyzer.QueryProcessing
             }
             var array = selector.Split('.');
             var pqlVar = array[0].Trim();
+            if (array.Length == 1)
+                return (x[pqlVar] as StatementToken).StatementNumber.ToString();
             var pqlProperty = array[1].Trim();
 
             if (pqlProperty == "procName")
@@ -244,6 +251,22 @@ namespace StaticProgramAnalyzer.QueryProcessing
         {
             left = left.Trim();
             right = right.Trim();
+            if (int.TryParse(left, out int leftValue))
+            {
+                var leftToken = _pkb.TokenList.OfType<StatementToken>()
+                    .FirstOrDefault(x => x.StatementNumber == leftValue);
+                if (leftToken is null)
+                    return new List<Dictionary<string, IToken>>();
+                return combinations.Where(x =>
+                {
+                    var rightToken = x[right] as StatementToken;
+                    if (leftToken != null && rightToken != null)
+                    {
+                        return leftToken.Next.Contains(rightToken);
+                    }
+                    return false;
+                });
+            }
             var result = combinations.Where(x =>
             {
                 var leftToken = x[left] as StatementToken;
@@ -256,12 +279,44 @@ namespace StaticProgramAnalyzer.QueryProcessing
             });
             return result;
         }
-
         public IEnumerable<Dictionary<string, IToken>> NextStar(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
         {
             left = left.Trim();
             right = right.Trim();
-            var result = combinations.Where(x =>
+            if(int.TryParse(left, out int leftValue))
+            {
+                var leftToken = _pkb.TokenList.OfType<StatementToken>()
+                    .FirstOrDefault(x => x.StatementNumber == leftValue);
+                if (leftToken is null)
+                    return new List<Dictionary<string, IToken>>();
+                return combinations.Where(x =>
+                {
+                    var rightToken = x[right] as StatementToken;
+                    HashSet<StatementToken> validated = new HashSet<StatementToken>();
+
+                    if (leftToken != null && rightToken != null)
+                    {
+                        var toValidate = leftToken.Next.ToHashSet();
+                        while (toValidate.Count > 0)
+                        {
+                            var current = toValidate.First();
+                            toValidate.Remove(current);
+                            if (current == rightToken)
+                            {
+                                return true;
+                            }
+                            if (validated.Contains(current))
+                            {
+                                continue;
+                            }
+                            validated.Add(current);
+                            toValidate.UnionWith(current.Next);
+                        }
+                    }
+                    return false;
+                });
+            }
+            return combinations.Where(x =>
             {
                 var leftToken = x[left] as StatementToken;
                 var rightToken = x[right] as StatementToken;
@@ -288,7 +343,6 @@ namespace StaticProgramAnalyzer.QueryProcessing
                 }
                 return false;
             });
-            return result;
         }
 
         public IEnumerable<Dictionary<string, IToken>> Follows(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
@@ -349,14 +403,62 @@ namespace StaticProgramAnalyzer.QueryProcessing
         {
             left = left.Trim();
             right = right.Trim();
+            bool isRightNumber = int.TryParse(right, out int rightNumber);
+            bool isLeftNumber = int.TryParse(left, out int leftNumber);
+            //var result = combinations.Where(x =>
+            //{
+            //    var leftToken = x[left];
+            //    var rightToken = x[right];
+            //    if (leftToken is StatementToken && rightToken is StatementToken)
+            //    {
+            //        var leftStatement = leftToken as StatementToken;
+            //        var rightStatement = rightToken as StatementToken;
+            //        return (leftToken.Parent as IDeterminesFollows).FollowsStar(leftStatement, rightStatement);
+            //    }
+            //    return false;
+            //});
+            //return result;
+            if (isLeftNumber && !isRightNumber)
+            {
+                //get right tokens which are followed by token with statement number equal to lineNumber
+                return combinations.Where(x =>
+                {
+                    var rightToken = x[right];
+                    if (rightToken is StatementToken rightStatement)
+                    {
+                        return (rightToken.Parent as IDeterminesFollows).FollowsStar(leftNumber, rightStatement);
+                    }
+                    return false;
+                });
+            }
+            if (isRightNumber && !isLeftNumber)
+            {
+                //get left tokens which are following token with statement number equal to lineNumber
+                return combinations.Where(x =>
+                {
+                    var leftToken = x[left];
+                    if (leftToken is StatementToken leftStatement)
+                    {
+                        return (leftToken.Parent as IDeterminesFollows).FollowsStar(leftStatement, rightNumber);
+                    }
+                    return false;
+                });
+            }
+            if (isRightNumber && isLeftNumber)
+            {
+                if (_pkb.TokenList.OfType<IDeterminesFollows>().Any(x => x.FollowsStar(leftNumber, rightNumber)))
+                {
+                    return combinations;
+                }
+                return new List<Dictionary<string, IToken>>();
+
+            }
             var result = combinations.Where(x =>
             {
                 var leftToken = x[left];
                 var rightToken = x[right];
-                if (leftToken is StatementToken && rightToken is StatementToken)
+                if (leftToken is StatementToken leftStatement && rightToken is StatementToken rightStatement)
                 {
-                    var leftStatement = leftToken as StatementToken;
-                    var rightStatement = rightToken as StatementToken;
                     return (leftToken.Parent as IDeterminesFollows).FollowsStar(leftStatement, rightStatement);
                 }
                 return false;
@@ -487,7 +589,9 @@ namespace StaticProgramAnalyzer.QueryProcessing
         public IEnumerable<Dictionary<string, IToken>> Modifies(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
         {
             right = right.Trim().Replace("\"", "");
-            var assignments = combinations.Where(x => _pkb.AllModifies[right].Contains(x[left]));
+            var assignments = combinations
+                .Where(x => _pkb.AllModifies.ContainsKey(right))
+                .Where(x => _pkb.AllModifies[right].Contains(x[left]));
             return assignments;
         }
 
@@ -652,7 +756,11 @@ namespace StaticProgramAnalyzer.QueryProcessing
             {
                 return new IsConstantPredicate();
             }
-            return null;// TODO : throw exception or choose what to do
+            else if (type == "prog_line")
+            {
+                return new IsStatementPredicate();
+            }
+            throw new Exception("Unrecognized type!");
         }
     }
 }
