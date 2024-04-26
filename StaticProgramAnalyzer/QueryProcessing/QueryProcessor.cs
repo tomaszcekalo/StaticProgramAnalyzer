@@ -405,19 +405,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
             right = right.Trim();
             bool isRightNumber = int.TryParse(right, out int rightNumber);
             bool isLeftNumber = int.TryParse(left, out int leftNumber);
-            //var result = combinations.Where(x =>
-            //{
-            //    var leftToken = x[left];
-            //    var rightToken = x[right];
-            //    if (leftToken is StatementToken && rightToken is StatementToken)
-            //    {
-            //        var leftStatement = leftToken as StatementToken;
-            //        var rightStatement = rightToken as StatementToken;
-            //        return (leftToken.Parent as IDeterminesFollows).FollowsStar(leftStatement, rightStatement);
-            //    }
-            //    return false;
-            //});
-            //return result;
+            
             if (isLeftNumber && !isRightNumber)
             {
                 //get right tokens which are followed by token with statement number equal to lineNumber
@@ -586,7 +574,10 @@ namespace StaticProgramAnalyzer.QueryProcessing
             return result;
         }
 
-        public IEnumerable<Dictionary<string, IToken>> Modifies(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
+        public IEnumerable<Dictionary<string, IToken>> Modifies(
+            IEnumerable<Dictionary<string, IToken>> combinations, 
+            string left, 
+            string right)
         {
             right = right.Trim().Replace("\"", "");
             var assignments = combinations
@@ -608,7 +599,10 @@ namespace StaticProgramAnalyzer.QueryProcessing
             return GetFinalParent(x.Parent, left);
         }
 
-        public IEnumerable<Dictionary<string, IToken>> Uses(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
+        public IEnumerable<Dictionary<string, IToken>> Uses(
+            IEnumerable<Dictionary<string, IToken>> combinations, 
+            string left, 
+            string right)
         {
             if (right.StartsWith('"') && right.EndsWith('"'))
             {
@@ -629,7 +623,9 @@ namespace StaticProgramAnalyzer.QueryProcessing
         }
 
         public IEnumerable<Dictionary<string, IToken>> Parent(
-            IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
+            IEnumerable<Dictionary<string, IToken>> combinations, 
+            string left, 
+            string right)
         {
             left = left.Trim();
             right = right.Trim();
@@ -650,7 +646,10 @@ namespace StaticProgramAnalyzer.QueryProcessing
             return result;
         }
 
-        public IEnumerable<Dictionary<string, IToken>> CallsStar(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
+        public IEnumerable<Dictionary<string, IToken>> CallsStar(
+            IEnumerable<Dictionary<string, IToken>> combinations, 
+            string left, 
+            string right)
         {
             right = right.Trim();
             bool rightHasQuotes = right.StartsWith('"') && right.EndsWith('"');
