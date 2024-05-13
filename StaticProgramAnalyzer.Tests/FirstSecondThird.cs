@@ -707,5 +707,27 @@ namespace StaticProgramAnalyzer.Tests
             //Assert
             Assert.AreEqual("2, 3", result);
         }
+        [TestMethod]
+        public void FollowsAnyTwice()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("stmt s;", "Select BOOLEAN such that Follows(_, _)");
+            //Assert
+            Assert.AreEqual("true", result);
+        }
+        [TestMethod]
+        public void SelectStatementThatHasAnyParent()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("stmt s;", "Select s such that Parent (_, s)");
+            //Assert
+            Assert.AreEqual("7, 8, 9, 11, 12", result);
+        }
     }
 }

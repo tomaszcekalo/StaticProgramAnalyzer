@@ -1,6 +1,7 @@
 ﻿using StaticProgramAnalyzer.KnowledgeBuilding;
 using StaticProgramAnalyzer.Parsing;
 using StaticProgramAnalyzer.QueryProcessing;
+using System.Diagnostics;
 
 namespace StaticProgramAnalyzer.Console
 {
@@ -15,17 +16,17 @@ namespace StaticProgramAnalyzer.Console
             var pkb = treeBuilder.GetPKB(tokens);
             var processor = new QueryProcessor(pkb, new QueryResultProjector());
 
-            var logFilePath = "log.txt";
+            //var logFilePath = "log.txt";
             //var processor = new SuperProcessor();
             //processor.LoadFromFile(args[0]);
-            using (StreamWriter logFileWriter = new StreamWriter(logFilePath, append: true))
+            //using (StreamWriter logFileWriter = new StreamWriter(logFilePath, append: true))
             {
-                logFileWriter.WriteLine(DateTime.Now.ToString());
-                logFileWriter.WriteLine($"{args.Length} arguments");
+                //logFileWriter.WriteLine(DateTime.Now.ToString());
+                //logFileWriter.WriteLine($"{args.Length} arguments");
 
                 foreach (var arg in args)
                 {
-                    logFileWriter.WriteLine(arg);
+                    //logFileWriter.WriteLine(arg);
 
                 }
                 //logFileWriter.WriteLine(Console.ReadLine());
@@ -33,10 +34,10 @@ namespace StaticProgramAnalyzer.Console
                 while (true)
                 {
                     var declarations = System.Console.ReadLine();
-                    logFileWriter.WriteLine($"{declarations} ");
+                    //logFileWriter.WriteLine($"{declarations} ");
                     var select = System.Console.ReadLine();
-                    logFileWriter.WriteLine($"{select} ");
-                    logFileWriter.Flush();
+                    //logFileWriter.WriteLine($"{select} ");
+                    //logFileWriter.Flush();
                     try
                     {
                         System.Console.WriteLine(processor.ProcessQuery(declarations, select));
