@@ -254,6 +254,10 @@ namespace StaticProgramAnalyzer.QueryProcessing
 
         public IEnumerable<Dictionary<string, IToken>> Next(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
         {
+            if(left=="_" && right=="_")
+            {
+                return combinations;//todo: add proper checks
+            }
             if (int.TryParse(left, out int leftValue))
             {
                 var leftToken = _pkb.TokenList.OfType<StatementToken>()
@@ -269,6 +273,13 @@ namespace StaticProgramAnalyzer.QueryProcessing
                     }
                     return false;
                 });
+            }
+            if(int.TryParse(right, out int rightValue))
+            {
+                var rightToken= _pkb.TokenList.OfType<StatementToken>()
+                    .FirstOrDefault(x => x.StatementNumber == rightValue);
+                return combinations.Where(x => x[left] is StatementToken st && st.Next.Contains(rightToken));
+
             }
             var result = combinations.Where(x =>
             {
@@ -304,6 +315,35 @@ namespace StaticProgramAnalyzer.QueryProcessing
                             var current = toValidate.First();
                             toValidate.Remove(current);
                             if (current == rightToken)
+                            {
+                                return true;
+                            }
+                            if (validated.Contains(current))
+                            {
+                                continue;
+                            }
+                            validated.Add(current);
+                            toValidate.UnionWith(current.Next);
+                        }
+                    }
+                    return false;
+                });
+            }
+            if(int.TryParse(right, out int rightValue))
+            {
+                return combinations.Where(x =>
+                {
+                    var leftToken = x[left] as StatementToken;
+                    HashSet<StatementToken> validated = new HashSet<StatementToken>();
+
+                    if (leftToken != null)
+                    {
+                        var toValidate = leftToken.Next.OfType<StatementToken>().ToHashSet();
+                        while (toValidate.Count > 0)
+                        {
+                            var current = toValidate.First();
+                            toValidate.Remove(current);
+                            if (current.StatementNumber == rightValue)
                             {
                                 return true;
                             }
@@ -644,6 +684,9 @@ namespace StaticProgramAnalyzer.QueryProcessing
             bool isRightText = right.StartsWith('"') && right.EndsWith('"');
             bool isLeftText = left.StartsWith('"') && left.EndsWith('"');
             bool isLeftNumber = int.TryParse(left, out int leftStatementNumber);
+            right = right.Replace("\"", "");
+            left = left.Replace("\"", "");
+
             if (isLeftNumber)
             {
                 return combinations.Where(x =>
@@ -659,10 +702,8 @@ namespace StaticProgramAnalyzer.QueryProcessing
             
             if (isRightText)
             {
-                right = right.Replace("\"", "");
                 if (isLeftText)
                 {
-                    left = left.Replace("\"", "");
                     if (_pkb.AllUses.ContainsKey(right) && _pkb.AllUses[right].OfType<IHasProcedureName>().Any(x => x.ProcedureName == left))
                         return combinations;
                     return new List<Dictionary<string, IToken>>();
@@ -674,7 +715,6 @@ namespace StaticProgramAnalyzer.QueryProcessing
             }
             if (isLeftText)
             {
-                left = left.Replace("\"", "");
                 return combinations.Where(x => x[right] is VariableToken vt
                 && _pkb.AllUses.ContainsKey(vt.VariableName)
                 && _pkb.AllUses[vt.VariableName].OfType<IHasProcedureName>().Any(a => a.ProcedureName == left));
@@ -744,14 +784,16 @@ namespace StaticProgramAnalyzer.QueryProcessing
         {
             bool rightHasQuotes = right.StartsWith('"') && right.EndsWith('"');
             bool leftHasQuotes = left.StartsWith('"') && left.EndsWith('"');
-            right = right.Replace("\"", "\"\"");
+            right = right.Replace("\"", "");
+            left = left.Replace("\"", "");
 
             return combinations.Where(x =>
             {
-
-                return _pkb.AllCalls[leftHasQuotes ? left : (x[left] as IHasProcedureName).ProcedureName].Contains(
-                rightHasQuotes ? right : (x[right] as IHasProcedureName).ProcedureName);
-
+                var leftProcName = leftHasQuotes ? left : (x[left] as IHasProcedureName)?.ProcedureName;
+                var rightProcName = rightHasQuotes ? right : (x[right] as IHasProcedureName)?.ProcedureName;
+                if(leftProcName is  not null && rightProcName is not null)
+                    return _pkb.AllCalls[leftProcName].Contains(rightProcName);
+                return false;
             });
         }
 
@@ -761,9 +803,19 @@ namespace StaticProgramAnalyzer.QueryProcessing
             string right)
         {
             bool rightHasQuotes = right.StartsWith('"') && right.EndsWith('"');
-            if (left.StartsWith('"') && left.EndsWith('"'))
+            bool leftHasQuotes = left.StartsWith('"') && left.EndsWith('"');
+            right = right.Replace("\"", "");
+            left = left.Replace("\"", "");
+
+            if (leftHasQuotes)
             {
-                var called = _pkb.CallsDirectly[left.Replace("\"", "")];
+                if(rightHasQuotes)
+                {
+                    if (_pkb.CallsDirectly[left].Contains(right))
+                        return combinations;
+                    return new List<Dictionary<string, IToken>>();
+                }
+                var called = _pkb.CallsDirectly[left];
                 return combinations.Where(x =>
                 {
                     var rightToken = x[right];
@@ -778,7 +830,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
                 if (rightHasQuotes)
                 {
                     return descendantsThatCall
-                        .Any(call => call.ProcedureName == right.Replace("\"", ""));
+                        .Any(call => call.ProcedureName == right);
                 }
                 return descendantsThatCall
                     .Any(call => right == "_" || call.ProcedureName == x[right].ToString());

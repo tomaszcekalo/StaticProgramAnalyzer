@@ -6,7 +6,7 @@ using System.Text;
 
 namespace StaticProgramAnalyzer.Tokens
 {
-    internal class IfThenElseToken : StatementToken, IDeterminesFollows
+    internal class IfThenElseToken : StatementToken, IDeterminesFollows, IUseVariableToken
     {
         public IfThenElseToken(IToken parent, ParserToken source, int statementNumber) : base(parent, source, statementNumber)
         {

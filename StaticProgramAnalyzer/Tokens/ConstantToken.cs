@@ -16,6 +16,10 @@ namespace StaticProgramAnalyzer.Tokens
             Value = int.Parse(content);
             UsesConstants.Add(content);
         }
+        public override string ToString()
+        {
+            return Value.ToString();
+        }
     }
     
     
