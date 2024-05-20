@@ -189,7 +189,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
             }
             var parametersArray = parameters.Last().Split(',', StringSplitOptions.RemoveEmptyEntries);
             parametersArray[0] = parametersArray[0].Trim();
-            if(parametersArray.Length > 1)
+            if (parametersArray.Length > 1)
                 parametersArray[1] = parametersArray[1].Trim();
 
             if (condition.Contains("="))
@@ -254,7 +254,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
 
         public IEnumerable<Dictionary<string, IToken>> Next(IEnumerable<Dictionary<string, IToken>> combinations, string left, string right)
         {
-            if(left=="_" && right=="_")
+            if (left == "_" && right == "_")
             {
                 return combinations;//todo: add proper checks
             }
@@ -274,12 +274,11 @@ namespace StaticProgramAnalyzer.QueryProcessing
                     return false;
                 });
             }
-            if(int.TryParse(right, out int rightValue))
+            if (int.TryParse(right, out int rightValue))
             {
-                var rightToken= _pkb.TokenList.OfType<StatementToken>()
+                var rightToken = _pkb.TokenList.OfType<StatementToken>()
                     .FirstOrDefault(x => x.StatementNumber == rightValue);
                 return combinations.Where(x => x[left] is StatementToken st && st.Next.Contains(rightToken));
-
             }
             var result = combinations.Where(x =>
             {
@@ -329,7 +328,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
                     return false;
                 });
             }
-            if(int.TryParse(right, out int rightValue))
+            if (int.TryParse(right, out int rightValue))
             {
                 return combinations.Where(x =>
                 {
@@ -513,25 +512,11 @@ namespace StaticProgramAnalyzer.QueryProcessing
                 var token = x[pqlVariable];
                 if (token is WhileToken)
                 {
-                    if (left == "_" || (token as WhileToken).VariableName.Equals(left))
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    return (left == "_" || (token as WhileToken).VariableName.Equals(left));
                 }
                 else if (token is IfThenElseToken)
                 {
-                    if (left == "_" || (token as IfThenElseToken).VariableName.Equals(left))
-                    {
-                        return true;
-                    }
-                    else
-                    {
-                        return false;
-                    }
+                    return (left == "_" || (token as IfThenElseToken).VariableName.Equals(left));
                 }
                 else if (token is AssignToken)
                 {
@@ -699,7 +684,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
                     return false;
                 });
             }
-            
+
             if (isRightText)
             {
                 if (isLeftText)
@@ -782,7 +767,16 @@ namespace StaticProgramAnalyzer.QueryProcessing
             string left,
             string right)
         {
-            bool rightHasQuotes = right.StartsWith('"') && right.EndsWith('"');
+            if (left == "_" && right == "_")
+            {
+                if(_pkb.AllCalls.Any())
+                {
+                    return combinations;
+                }
+                return new List<Dictionary<string, IToken>>();
+            }
+
+                bool rightHasQuotes = right.StartsWith('"') && right.EndsWith('"');
             bool leftHasQuotes = left.StartsWith('"') && left.EndsWith('"');
             right = right.Replace("\"", "");
             left = left.Replace("\"", "");
@@ -791,8 +785,11 @@ namespace StaticProgramAnalyzer.QueryProcessing
             {
                 var leftProcName = leftHasQuotes ? left : (x[left] as IHasProcedureName)?.ProcedureName;
                 var rightProcName = rightHasQuotes ? right : (x[right] as IHasProcedureName)?.ProcedureName;
-                if(leftProcName is  not null && rightProcName is not null)
+                if (leftProcName is not null && rightProcName is not null)
+                {
                     return _pkb.AllCalls[leftProcName].Contains(rightProcName);
+
+                }
                 return false;
             });
         }
@@ -809,7 +806,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
 
             if (leftHasQuotes)
             {
-                if(rightHasQuotes)
+                if (rightHasQuotes)
                 {
                     if (_pkb.CallsDirectly[left].Contains(right))
                         return combinations;

@@ -729,5 +729,17 @@ namespace StaticProgramAnalyzer.Tests
             //Assert
             Assert.AreEqual("7, 8, 9, 11, 12", result);
         }
+        [TestMethod]
+        public void CallsStarDoubleUnderline()
+        {
+            //Arrange
+            var pkb=treeBuilder.GetPKB(tokens);
+            var processor=new QueryProcessor(pkb,new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("procedure p;", "Select BOOLEAN such that Calls* (_, _)");
+            //Assert
+            Assert.AreEqual("true", result);
+        }
+
     }
 }
