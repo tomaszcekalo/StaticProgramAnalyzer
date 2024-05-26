@@ -92,7 +92,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
             //Regex regex = new Regex("pattern [^(]+\\([ ]*((_?(\\\"?[^\\\"?]+\\\"?)?_?))[ ]*,([ ]*((_?(\\\"?[^\\\"?]+\\\"?)?_?))[ ]*,?[ ]*)+[ ]*\\)");
             String withoutPattern = selects;
             List<String> matches = new List<String>();
-            do
+            while (withoutPattern.IndexOf("pattern") >= 0)
             {
                 string pat = "pattern";
                 int patternStart = withoutPattern.IndexOf(pat);
@@ -112,7 +112,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
                 }
                 matches.Add(withoutPattern.Substring(patternStart, indexNow - patternStart + 1));
                 withoutPattern = withoutPattern.Remove(patternStart, indexNow - patternStart + 1);
-            } while (withoutPattern.IndexOf("pattern") >= 0);
+            }
             /*
             String withoutPattern = regex.Replace(selects, "");
             MatchCollection mc = regex.Matches(selects);
