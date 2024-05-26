@@ -89,12 +89,38 @@ namespace StaticProgramAnalyzer.QueryProcessing
             }
             //just because we can't be sure if there's no variable named "pattern"
             //Regex regex = new Regex("pattern [^(]+\\([^,]+,[^,)]+(,[^)]+)?\\)");
-            Regex regex = new Regex("pattern [^(]+\\([ ]*((_?(\\\"[^\\\"]+\\\")?_?))[ ]*,([ ]*((_?(\\\"[^\\\"]+\\\")?_?))[ ]*,?[ ]*)+[ ]*\\)");
+            //Regex regex = new Regex("pattern [^(]+\\([ ]*((_?(\\\"?[^\\\"?]+\\\"?)?_?))[ ]*,([ ]*((_?(\\\"?[^\\\"?]+\\\"?)?_?))[ ]*,?[ ]*)+[ ]*\\)");
+            String withoutPattern = selects;
+            List<String> matches = new List<String>();
+            do
+            {
+                string pat = "pattern";
+                int patternStart = withoutPattern.IndexOf(pat);
+                int indexNow = patternStart + pat.Length;
+                int bracketsOpen = 0;
+                while ((withoutPattern.ElementAt(indexNow) == ')' && bracketsOpen == 1) == false)
+                {
+                    if (withoutPattern.ElementAt(indexNow) == '(')
+                    {
+                        ++bracketsOpen;
+                    }
+                    else if (withoutPattern.ElementAt(indexNow) == ')')
+                    {
+                        --bracketsOpen;
+                    }
+                    ++indexNow;
+                }
+                matches.Add(withoutPattern.Substring(patternStart, indexNow - patternStart + 1));
+                withoutPattern = withoutPattern.Remove(patternStart, indexNow - patternStart + 1);
+            } while (withoutPattern.IndexOf("pattern") >= 0);
+            /*
             String withoutPattern = regex.Replace(selects, "");
             MatchCollection mc = regex.Matches(selects);
             IEnumerable<String> matches = mc.Select(x => x.Value);
+            */
 
             // here are conditions
+            // there's no pattern already
             var conditionStrings = withoutPattern
                 .Replace(" pattern ", " and pattern ")
                 .Split(new string[]

@@ -161,6 +161,14 @@ namespace StaticProgramAnalyzer.Tests
             Assert.AreEqual(processor.ProcessQuery("assign a; while w", "Select a such that Parent(w, a) and pattern a(\"x\",_\"x+y\"_) and pattern w(\"k\",_)"), "15");
         }
         /// <summary>
+        /// find assigments that are in while controled by variable k and assigment modifies x and somewhere it has x+y
+        /// </summary>
+        [TestMethod]
+        public void noooPatternTestAssignMultiParentWhExactAsVarExactExprNotExact()
+        {
+            Assert.AreEqual(processor.ProcessQuery("assign a; while w", "Select a such that Parent(w, a) pattern a(\"x\",_\"x+y\"_) pattern w(\"k\",_)"), "15");
+        }
+        /// <summary>
         /// find assigments that are in while controled by ANY variable and assigment modifies x and somewhere it has x+y
         /// </summary>
         [TestMethod]
