@@ -740,6 +740,27 @@ namespace StaticProgramAnalyzer.Tests
             //Assert
             Assert.AreEqual("true", result);
         }
-
+        [TestMethod]
+        public void SelectPatternWithVarNameEqualX()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("assign a; variable v;", "Select a pattern a (v, _) with v.varName = \"x\"");
+            //Assert
+            Assert.AreEqual("1, 4, 7, 11, 15", result);
+        }
+        [TestMethod]
+        public void SelectPairThatModifiesPattern()
+        {
+            //Arrange
+            var pkb = treeBuilder.GetPKB(tokens);
+            var processor = new QueryProcessor(pkb, new QueryResultProjector());
+            //Act
+            var result = processor.ProcessQuery("assign a; variable v;", "Select a such that Modifies(a, v) with v.varName = \"x\" pattern a (v, _)");
+            //Assert
+            Assert.AreEqual("1, 4, 7, 11, 15", result);
+        }
     }
 }

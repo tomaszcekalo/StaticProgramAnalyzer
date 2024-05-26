@@ -95,7 +95,9 @@ namespace StaticProgramAnalyzer.QueryProcessing
             IEnumerable<String> matches = mc.Select(x => x.Value);
 
             // here are conditions
-            var conditionStrings = withoutPattern.Split(new string[]
+            var conditionStrings = withoutPattern
+                .Replace(" pattern ", " and pattern ")
+                .Split(new string[]
             {
                 " such that ",
                 " with ",
