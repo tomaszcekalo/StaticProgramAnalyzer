@@ -136,7 +136,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
 
             for (int i = 1; i < conditionStrings.Count; i++)
             {
-                combinations = FilterByCondition(combinations, conditionStrings[i]);
+                combinations = FilterByCondition(combinations, conditionStrings[i], variablePredicates);
             }
             // get only variables that are in select
             var variableToSelect = GetVariablesToSelect(selects, variablePredicates);
@@ -201,7 +201,8 @@ namespace StaticProgramAnalyzer.QueryProcessing
 
         public IEnumerable<Dictionary<string, IToken>> FilterByCondition(
             IEnumerable<Dictionary<string, IToken>> combinations,
-            string condition)
+            string condition,
+            Dictionary<string, IPredicate> variablePredicates)
         {
             int startB = condition.IndexOf('(');
             int stopB = condition.LastIndexOf(')');
@@ -522,6 +523,21 @@ namespace StaticProgramAnalyzer.QueryProcessing
         public IEnumerable<Dictionary<string, IToken>> Pattern(IEnumerable<Dictionary<string, IToken>> combinations, string pqlVariable, string left, string right, string rightestRight = null)
         {
             pqlVariable = pqlVariable.Trim();
+
+            left = left.Replace(" ", "");
+            right = right.Replace(" ", "");
+
+            if (left.IndexOf('\"') == -1 && left!="_")
+            {
+                var comb = combinations.First();
+                if (comb != null)
+                {
+                    left = (comb[left] as VariableToken).VariableName;
+                    //comb[left]
+                    ///["left"].VariableName;
+                }
+            }
+
             left = left.Replace("\"", "").Trim();
             right = right.Replace("\"", "").Trim();
             bool exactMatch = !(right.StartsWith("_") && right.EndsWith("_") && right.Length > 1);
