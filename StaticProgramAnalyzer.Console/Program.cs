@@ -7,7 +7,7 @@ namespace StaticProgramAnalyzer.Console
 {
     internal class Program
     {
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             var parser = new Parser();
             var lines = File.ReadAllLines(args[0]);
@@ -15,7 +15,11 @@ namespace StaticProgramAnalyzer.Console
             var treeBuilder = new KnowledgeBuilder(parser);
             var pkb = treeBuilder.GetPKB(tokens);
             var processor = new QueryProcessor(pkb, new QueryResultProjector());
-
+            var cfgdisplay = new CFGDisplay();
+            if (args.Contains("display"))
+            {
+                cfgdisplay.Display(pkb.TokenList);
+            }
             //var logFilePath = "log.txt";
             //var processor = new SuperProcessor();
             //processor.LoadFromFile(args[0]);
@@ -27,7 +31,6 @@ namespace StaticProgramAnalyzer.Console
                 foreach (var arg in args)
                 {
                     //logFileWriter.WriteLine(arg);
-
                 }
                 //logFileWriter.WriteLine(Console.ReadLine());
                 System.Console.WriteLine("Ready");
@@ -42,7 +45,7 @@ namespace StaticProgramAnalyzer.Console
                     {
                         System.Console.WriteLine(processor.ProcessQuery(declarations, select));
                     }
-                    catch(Exception ex)
+                    catch (Exception ex)
                     {
                         System.Console.WriteLine(ex.Message);
                     }

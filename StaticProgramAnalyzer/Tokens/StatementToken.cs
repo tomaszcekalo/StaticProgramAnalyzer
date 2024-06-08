@@ -29,6 +29,7 @@ namespace StaticProgramAnalyzer.Tokens
         }
 
         public List<StatementToken> Next { get; set; }
+
         public virtual void AddNext(StatementToken next)
         {
             Next.Add(next);

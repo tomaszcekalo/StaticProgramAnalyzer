@@ -6,6 +6,6 @@ namespace StaticProgramAnalyzer.Tokens
 {
     public interface IUseVariableToken
     {
-        public string VariableName { get; set; }
+        public VariableToken Variable { get; }
     }
 }

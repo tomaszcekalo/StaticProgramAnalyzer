@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace StaticProgramAnalyzer.Tokens
@@ -11,5 +12,7 @@ namespace StaticProgramAnalyzer.Tokens
 
         {
         }
+
+        public VariableToken Variable => this;
     }
 }

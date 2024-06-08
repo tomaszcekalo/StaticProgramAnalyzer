@@ -120,7 +120,7 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
         {
             var directUses = pkb.ProceduresTree
                 .SelectMany(x => x.GetDescentands().OfType<IUseVariableToken>())
-                .Select(x => (x.VariableName, x as IToken));
+                .Select(x => (x.Variable.VariableName, x as IToken)).ToList();
 
             var result = directUses
                 .GroupBy(x => x.VariableName)
@@ -265,7 +265,7 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
                     throw new Exception("Unexpected token: " + token.Content);
                 }
             }
-            
+
             return result;
         }
 
@@ -528,7 +528,10 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
             WhileToken whileToken = new(parent, source, ++_statementCounter);
             ParserToken token = tokenQueue.Dequeue();
             CheckIfValidName(token.Content);
-            whileToken.VariableName = token.Content;
+            whileToken.Variable = new VariableToken(whileToken, token.Content)
+            {
+                Source = token
+            };
             token = tokenQueue.Dequeue();
             Contract.Assert(token.Content == "{");
             whileToken.StatementList = this.GetStatementList(whileToken, tokenQueue);
@@ -544,7 +547,10 @@ namespace StaticProgramAnalyzer.KnowledgeBuilding
             ParserToken token = tokenQueue.Dequeue();
             IfThenElseToken ifToken = new(parent, token, ++_statementCounter);
             CheckIfValidName(token.Content);
-            ifToken.VariableName = token.Content;
+            ifToken.Variable = new VariableToken(ifToken, token.Content)
+            {
+                Source = token
+            };
             token = tokenQueue.Dequeue();
             Contract.Assert(token.Content == "then");
             token = tokenQueue.Dequeue();

@@ -10,7 +10,7 @@ namespace StaticProgramAnalyzer.Tokens
         {
         }
 
-        public string VariableName { get; set; }
+        public VariableToken Variable { get; set; }
         public List<StatementToken> StatementList { get; set; }
 
         public bool Follows(StatementToken left, StatementToken right)
@@ -86,8 +86,11 @@ namespace StaticProgramAnalyzer.Tokens
 
         public override IEnumerable<IToken> GetDescentands()
         {
-            return StatementList.Concat(
-                StatementList.SelectMany(x => x.GetDescentands()));
+            var result = StatementList.Concat(
+                StatementList.SelectMany(x => x.GetDescentands()))
+                .ToList();
+            result.Add(Variable);
+            return result;
         }
     }
 }

@@ -527,7 +527,7 @@ namespace StaticProgramAnalyzer.QueryProcessing
             left = left.Replace(" ", "");
             right = right.Replace(" ", "");
 
-            if (left.IndexOf('\"') == -1 && left!="_")
+            if (left.IndexOf('\"') == -1 && left != "_")
             {
                 var comb = combinations.First();
                 if (comb != null)
@@ -556,11 +556,11 @@ namespace StaticProgramAnalyzer.QueryProcessing
                 var token = x[pqlVariable];
                 if (token is WhileToken)
                 {
-                    return (left == "_" || (token as WhileToken).VariableName.Equals(left));
+                    return (left == "_" || (token as WhileToken).Variable.VariableName.Equals(left));
                 }
                 else if (token is IfThenElseToken)
                 {
-                    return (left == "_" || (token as IfThenElseToken).VariableName.Equals(left));
+                    return (left == "_" || (token as IfThenElseToken).Variable.VariableName.Equals(left));
                 }
                 else if (token is AssignToken)
                 {
@@ -813,14 +813,14 @@ namespace StaticProgramAnalyzer.QueryProcessing
         {
             if (left == "_" && right == "_")
             {
-                if(_pkb.AllCalls.Any())
+                if (_pkb.AllCalls.Any())
                 {
                     return combinations;
                 }
                 return new List<Dictionary<string, IToken>>();
             }
 
-                bool rightHasQuotes = right.StartsWith('"') && right.EndsWith('"');
+            bool rightHasQuotes = right.StartsWith('"') && right.EndsWith('"');
             bool leftHasQuotes = left.StartsWith('"') && left.EndsWith('"');
             right = right.Replace("\"", "");
             left = left.Replace("\"", "");
@@ -832,7 +832,6 @@ namespace StaticProgramAnalyzer.QueryProcessing
                 if (leftProcName is not null && rightProcName is not null)
                 {
                     return _pkb.AllCalls[leftProcName].Contains(rightProcName);
-
                 }
                 return false;
             });

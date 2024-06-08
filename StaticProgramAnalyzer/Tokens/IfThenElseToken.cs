@@ -12,7 +12,7 @@ namespace StaticProgramAnalyzer.Tokens
         {
         }
 
-        public string VariableName { get; set; }
+        public VariableToken Variable { get; set; }
 
         public List<StatementToken> Then { get; internal set; }
 
@@ -20,9 +20,9 @@ namespace StaticProgramAnalyzer.Tokens
 
         public bool Follows(StatementToken left, StatementToken right)
         {
-            if(Then.Contains(left) && Then.Contains(right))
+            if (Then.Contains(left) && Then.Contains(right))
                 return Then.IndexOf(left) == Then.IndexOf(right) - 1;
-            if(Else.Contains(left) && Else.Contains(right))
+            if (Else.Contains(left) && Else.Contains(right))
                 return Else.IndexOf(left) == Else.IndexOf(right) - 1;
             return false;
         }
@@ -44,12 +44,11 @@ namespace StaticProgramAnalyzer.Tokens
                 return Else[index - 1].StatementNumber == statementNumber;
             }
             return false;
-
         }
 
         public bool Follows(StatementToken left, int statementNumber)
         {
-            if(Then.Contains(left))
+            if (Then.Contains(left))
             {
                 var index = Then.IndexOf(left);
                 if (index == Then.Count - 1)
@@ -99,13 +98,13 @@ namespace StaticProgramAnalyzer.Tokens
 
         public bool FollowsStar(int statementNumber, StatementToken right)
         {
-            var specifiedStatement=Then.Find(x=> x.StatementNumber == statementNumber);
-            if(specifiedStatement is not null)
+            var specifiedStatement = Then.Find(x => x.StatementNumber == statementNumber);
+            if (specifiedStatement is not null)
             {
                 return FollowsStar(specifiedStatement, right);
             }
-            specifiedStatement=Else.Find(x=>x.StatementNumber==statementNumber);
-            if(specifiedStatement is not null)
+            specifiedStatement = Else.Find(x => x.StatementNumber == statementNumber);
+            if (specifiedStatement is not null)
             {
                 return FollowsStar(specifiedStatement, right);
             }
@@ -114,13 +113,13 @@ namespace StaticProgramAnalyzer.Tokens
 
         public bool FollowsStar(StatementToken left, int statementNumber)
         {
-            var specifiedStatement=Then.Find(x=>x.StatementNumber == statementNumber);
-            if(specifiedStatement is not null)
+            var specifiedStatement = Then.Find(x => x.StatementNumber == statementNumber);
+            if (specifiedStatement is not null)
             {
-                return FollowsStar(left,specifiedStatement);
+                return FollowsStar(left, specifiedStatement);
             }
             specifiedStatement = Else.Find(x => x.StatementNumber == statementNumber);
-            if(specifiedStatement is not null)
+            if (specifiedStatement is not null)
             {
                 return FollowsStar(left, specifiedStatement);
             }
@@ -141,11 +140,13 @@ namespace StaticProgramAnalyzer.Tokens
 
         public override IEnumerable<IToken> GetDescentands()
         {
-            return Then
+            var result = Then
                 .Concat(Then.SelectMany(t => t.GetDescentands()))
                 .Concat(Else)
-                .Concat(Else.SelectMany(e => e.GetDescentands()));
+                .Concat(Else.SelectMany(e => e.GetDescentands()))
+                .ToList();
+            result.Add(Variable);
+            return result;
         }
-
     }
 }
